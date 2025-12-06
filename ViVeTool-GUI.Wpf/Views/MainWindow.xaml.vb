@@ -46,8 +46,13 @@ Namespace Views
         ''' Handles the window loaded event.
         ''' </summary>
         Private Async Sub MainWindow_Loaded(sender As Object, e As System.Windows.RoutedEventArgs)
-            ' Initialize the view model with data
-            Await _viewModel.InitializeAsync()
+            Try
+                ' Initialize the view model with data
+                Await _viewModel.InitializeAsync()
+            Catch ex As Exception
+                ' Log or display error - in production this would show a user-friendly message
+                System.Diagnostics.Debug.WriteLine($"Error initializing: {ex.Message}")
+            End Try
         End Sub
     End Class
 End Namespace
