@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>ViVeTool_GUI.Wpf</RootNamespace>
@@ -16,6 +16,8 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <!-- Suppress WPF0001 warning for experimental ThemeMode feature -->
     <NoWarn>$(NoWarn);WPF0001</NoWarn>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <NuGetAudit>True</NuGetAudit>
     
     <!-- TODO: For self-contained x64 distribution, uncomment and configure the following:
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -23,6 +25,10 @@
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     -->
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>True</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
