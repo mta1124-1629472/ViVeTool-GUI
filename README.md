@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![GitHub all releases](https://img.shields.io/github/downloads/peterstrick/vivetool-gui/total)
+![GitHub all releases](https://img.shields.io/github/downloads/peterstrick/vivetool-gui/total?label=downloads)
 ![GitHub License](https://img.shields.io/github/license/peterstrick/vivetool-gui)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/peterstrick/vivetool-gui)
 [![Discord Community](https://dcbadge.vercel.app/api/server/8vDFXEucp2?style=flat)](https://discord.gg/8vDFXEucp2)
@@ -20,7 +20,7 @@ ViVeTool GUI is a modern, user-friendly graphical interface for managing hidden 
 - 🎯 Simple button-based feature management
 - 🔍 Powerful search and filtering capabilities
 - 🌙 Modern UI with light/dark/system theme support (WPF)
-- ⚙️ Feature scanning and discovery tools
+- ⚙️ Advanced feature scanning and discovery tools
 - 📋 Community-maintained feature lists
 
 ## Getting Started
