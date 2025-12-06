@@ -120,13 +120,17 @@ Public NotInheritable Class DialogHelper
     ''' </summary>
     ''' <param name="caption">Dialog caption</param>
     ''' <param name="heading">Dialog heading</param>
+    ''' <param name="text">Optional additional text</param>
     ''' <param name="icon">Optional icon (defaults to Error)</param>
-    Public Shared Sub ShowErrorDialog(caption As String, heading As String, Optional icon As RadTaskDialogIcon = Nothing)
+    Public Shared Sub ShowErrorDialog(caption As String, heading As String, Optional text As String = Nothing, Optional icon As RadTaskDialogIcon = Nothing)
         Dim RTD As New RadTaskDialogPage With {
                 .Caption = caption,
                 .Heading = heading,
                 .Icon = If(icon Is Nothing, RadTaskDialogIcon.Error, icon)
             }
+        If text IsNot Nothing Then
+            RTD.Text = text
+        End If
         RTD.CommandAreaButtons.Add(RadTaskDialogButton.Close)
         RadTaskDialog.ShowDialog(RTD)
     End Sub

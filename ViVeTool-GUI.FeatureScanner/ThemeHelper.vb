@@ -52,8 +52,14 @@ Public NotInheritable Class ThemeHelper
     Public Shared Sub ApplySystemTheme(toggleButton As RadToggleButton, darkModeImage As System.Drawing.Image, lightModeImage As System.Drawing.Image)
         My.Settings.UseSystemTheme = True
         Dim AppsUseLightTheme_CurrentUserDwordKey As Microsoft.Win32.RegistryKey = My.Computer.Registry.CurrentUser.OpenSubKey("Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
+        If AppsUseLightTheme_CurrentUserDwordKey Is Nothing Then
+            ' Registry key not found, default to light theme
+            toggleButton.ToggleState = Telerik.WinControls.Enumerations.ToggleState.Off
+            toggleButton.Image = lightModeImage
+            Return
+        End If
         Dim AppsUseLightTheme_CurrentUserDwordValue As Object = AppsUseLightTheme_CurrentUserDwordKey.GetValue("SystemUsesLightTheme")
-        If CInt(AppsUseLightTheme_CurrentUserDwordValue) = 0 Then
+        If AppsUseLightTheme_CurrentUserDwordValue IsNot Nothing AndAlso CInt(AppsUseLightTheme_CurrentUserDwordValue) = 0 Then
             toggleButton.ToggleState = Telerik.WinControls.Enumerations.ToggleState.On
             toggleButton.Image = darkModeImage
         Else
