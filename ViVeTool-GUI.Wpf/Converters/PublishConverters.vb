@@ -109,4 +109,25 @@ Namespace Converters
             Return False
         End Function
     End Class
+
+    ''' <summary>
+    ''' Converts a Boolean to Visibility (inverse: False = Visible, True = Collapsed).
+    ''' </summary>
+    Public Class InverseBoolToVisibilityConverter
+        Implements IValueConverter
+
+        Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
+            If TypeOf value Is Boolean Then
+                Return If(CBool(value), Visibility.Collapsed, Visibility.Visible)
+            End If
+            Return Visibility.Visible
+        End Function
+
+        Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
+            If TypeOf value Is Visibility Then
+                Return DirectCast(value, Visibility) = Visibility.Collapsed
+            End If
+            Return True
+        End Function
+    End Class
 End Namespace

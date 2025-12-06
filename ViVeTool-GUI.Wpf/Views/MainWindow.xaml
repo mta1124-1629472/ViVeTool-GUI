@@ -18,6 +18,8 @@
         <Grid.RowDefinitions>
             <!-- Header/Toolbar -->
             <RowDefinition Height="Auto" />
+            <!-- Warning Banners (Admin/Feature Query) -->
+            <RowDefinition Height="Auto" />
             <!-- Main Content -->
             <RowDefinition Height="*" />
             <!-- Status Bar -->
@@ -61,8 +63,20 @@
                              VerticalContentAlignment="Center" />
                 </StackPanel>
 
-                <!-- Right: Theme Toggle -->
+                <!-- Right: Theme Toggle + Admin Badge -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Admin Badge (visible when NOT admin) -->
+                    <Border Background="#FFFFA726" 
+                            CornerRadius="3" 
+                            Padding="6,2" 
+                            Margin="0,0,8,0"
+                            Visibility="{Binding IsRunningAsAdmin, Converter={StaticResource InverseBoolToVisibilityConverter}}"
+                            ToolTip="{Binding AdminWarningMessage}">
+                        <TextBlock Text="⚠ Not Admin" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="11"
+                                   Foreground="#FF5D4037" />
+                    </Border>
                     <Button Content="{Binding CurrentThemeName}" 
                             Command="{Binding ToggleThemeCommand}"
                             ToolTip="Cycle Theme: Light → Dark → System"
@@ -71,8 +85,51 @@
             </Grid>
         </Border>
 
+        <!-- Warning Banners Area -->
+        <StackPanel Grid.Row="1">
+            <!-- Admin Warning Banner (shown when not elevated) -->
+            <Border Background="#FFFFF3E0" 
+                    BorderBrush="#FFFFA726" 
+                    BorderThickness="0,0,0,1"
+                    Padding="10,6"
+                    Visibility="{Binding IsRunningAsAdmin, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="⚠" FontSize="14" Foreground="#FFE65100" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBlock Grid.Column="1" 
+                               Text="{Binding AdminWarningMessage}" 
+                               Foreground="#FF5D4037"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Local Feature Query Warning Banner (shown when there are feature query issues) -->
+            <Border Background="#FFFFF8E1" 
+                    BorderBrush="#FFFFC107" 
+                    BorderThickness="0,0,0,1"
+                    Padding="10,6"
+                    Visibility="{Binding LocalFeatureWarning, Converter={StaticResource StringToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="ℹ" FontSize="14" Foreground="#FFF9A825" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBlock Grid.Column="1" 
+                               Text="{Binding LocalFeatureWarning}" 
+                               Foreground="#FF6D4C00"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+        </StackPanel>
+
         <!-- Main Content Area -->
-        <Grid Grid.Row="1" Margin="10">
+        <Grid Grid.Row="2" Margin="10">
             <Grid.ColumnDefinitions>
                 <!-- Feature List -->
                 <ColumnDefinition Width="*" />
@@ -296,7 +353,7 @@
         </Grid>
 
         <!-- Status Bar - Using System Accent Color for modern look -->
-        <Border Grid.Row="2" 
+        <Border Grid.Row="3" 
                 Background="{DynamicResource {x:Static SystemColors.AccentColorBrushKey}}"
                 Padding="10,6">
             <Grid>

@@ -19,6 +19,7 @@ Option Strict On
 
 Imports System.Collections.ObjectModel
 Imports System.ComponentModel
+Imports System.Security.Principal
 Imports System.Windows.Data
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
@@ -62,6 +63,47 @@ Namespace ViewModels
         Private _isPublishing As Boolean
         Private _canShowPublishPanel As Boolean
         Private _availableFormats As ObservableCollection(Of String)
+
+        ' Admin privilege check fields
+        Private _isRunningAsAdmin As Boolean
+        Private _adminWarningMessage As String = String.Empty
+        Private _localFeatureWarning As String = String.Empty
+
+        ''' <summary>
+        ''' Gets whether the application is running with administrator privileges.
+        ''' </summary>
+        Public Property IsRunningAsAdmin As Boolean
+            Get
+                Return _isRunningAsAdmin
+            End Get
+            Private Set(value As Boolean)
+                SetProperty(_isRunningAsAdmin, value)
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets the admin warning message to display when not running elevated.
+        ''' </summary>
+        Public Property AdminWarningMessage As String
+            Get
+                Return _adminWarningMessage
+            End Get
+            Private Set(value As String)
+                SetProperty(_adminWarningMessage, value)
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets the local feature query warning message (e.g., for group errors).
+        ''' </summary>
+        Public Property LocalFeatureWarning As String
+            Get
+                Return _localFeatureWarning
+            End Get
+            Private Set(value As String)
+                SetProperty(_localFeatureWarning, value)
+            End Set
+        End Property
 
         ''' <summary>
         ''' Gets or sets the collection of features.
@@ -388,6 +430,33 @@ Namespace ViewModels
 
             ' Set initial theme name
             _currentThemeName = _themeService.CurrentTheme
+
+            ' Check for administrator privileges
+            CheckAdminPrivileges()
+        End Sub
+
+        ''' <summary>
+        ''' Checks if the application is running with administrator privileges.
+        ''' </summary>
+        Private Sub CheckAdminPrivileges()
+            Try
+                Dim identity = WindowsIdentity.GetCurrent()
+                Dim principal = New WindowsPrincipal(identity)
+                IsRunningAsAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator)
+
+                If Not IsRunningAsAdmin Then
+                    AdminWarningMessage = "Running without administrator privileges. Feature queries and changes may be limited."
+                    System.Diagnostics.Debug.WriteLine("ViVeTool-GUI: Not running as administrator")
+                Else
+                    AdminWarningMessage = String.Empty
+                    System.Diagnostics.Debug.WriteLine("ViVeTool-GUI: Running as administrator")
+                End If
+            Catch ex As Exception
+                ' If we can't determine admin status, assume not admin and continue
+                IsRunningAsAdmin = False
+                AdminWarningMessage = "Could not determine administrator status. Some features may be limited."
+                System.Diagnostics.Debug.WriteLine($"Admin check failed: {ex.Message}")
+            End Try
         End Sub
 
         ''' <summary>
@@ -483,6 +552,7 @@ Namespace ViewModels
 
         ''' <summary>
         ''' Executes the refresh builds command asynchronously.
+        ''' Uses cached/offline feed as fallback if online fetch fails.
         ''' </summary>
         Private Async Function ExecuteRefreshBuildsAsync() As Task
             Try
@@ -498,11 +568,16 @@ Namespace ViewModels
 
                 If AvailableBuilds.Count > 0 Then
                     SelectedBuild = AvailableBuilds(0)
+                    StatusMessage = $"Found {AvailableBuilds.Count} builds."
+                Else
+                    ' No builds available from either online or cache - show non-blocking warning
+                    StatusMessage = "No builds available. Check your network connection or try again later."
+                    System.Diagnostics.Debug.WriteLine("Warning: No builds available from feed or cache")
                 End If
-
-                StatusMessage = $"Found {AvailableBuilds.Count} builds."
             Catch ex As Exception
-                StatusMessage = $"Error fetching builds: {ex.Message}"
+                ' Log the error but don't block the app
+                StatusMessage = $"Could not fetch builds: {ex.Message}. Local feature browsing still available."
+                System.Diagnostics.Debug.WriteLine($"Error fetching builds (non-fatal): {ex}")
             Finally
                 IsLoading = False
             End Try
@@ -519,10 +594,12 @@ Namespace ViewModels
 
         ''' <summary>
         ''' Loads features asynchronously.
+        ''' Handles group-related errors gracefully without blocking the app.
         ''' </summary>
         Private Async Function ExecuteLoadFeaturesAsync() As Task
             Try
                 IsLoading = True
+                LocalFeatureWarning = String.Empty
                 StatusMessage = "Loading features..."
 
                 Dim loadedFeatures = Await _featureService.GetFeaturesAsync()
@@ -538,20 +615,46 @@ Namespace ViewModels
                 ' Check for warnings from the service (non-blocking issues)
                 Dim warnings = _featureService.Warnings
                 Dim hasWarnings = warnings IsNot Nothing AndAlso warnings.Count > 0
+
+                ' Consolidate warnings for display (avoid duplicate messages)
+                If hasWarnings Then
+                    ' Check for group-related errors specifically
+                    Dim groupWarnings = warnings.Where(Function(w) w.Contains("Group") OrElse w.Contains("group")).ToList()
+                    Dim otherWarnings = warnings.Where(Function(w) Not (w.Contains("Group") OrElse w.Contains("group"))).ToList()
+
+                    If groupWarnings.Count > 0 Then
+                        ' Consolidate group warnings into a single message
+                        LocalFeatureWarning = "Local feature query unavailable: Group value constraints exceeded. You can still view feature lists from the feed."
+                    ElseIf otherWarnings.Count > 0 Then
+                        LocalFeatureWarning = $"Local feature query issues: {String.Join("; ", otherWarnings.Take(2))}"
+                    End If
+                End If
                 
                 If hasNoFeatures Then
-                    ' Display warning message but allow build selection to continue
-                    StatusMessage = "Could not load system features. You can still select a build and view feature lists."
+                    ' Set warning and continue - do not block
+                    If String.IsNullOrEmpty(LocalFeatureWarning) Then
+                        LocalFeatureWarning = _featureService.LastErrorMessage
+                        If String.IsNullOrEmpty(LocalFeatureWarning) Then
+                            LocalFeatureWarning = "Could not load local system features."
+                        End If
+                    End If
+                    StatusMessage = "Local features unavailable. You can still select a build and view feature lists."
                 ElseIf hasWarnings Then
                     ' Features loaded but with some warnings
-                    StatusMessage = $"Loaded {Features.Count} features with {warnings.Count} warning(s). Check console for details."
+                    StatusMessage = $"Loaded {Features.Count} features with {warnings.Count} warning(s)."
                 Else
                     StatusMessage = $"Loaded {Features.Count} features."
                 End If
             Catch ex As Exception
                 ' Even on exception, don't block the app - log and continue
-                StatusMessage = $"Warning: {ex.Message}. Build selection is still available."
-                System.Diagnostics.Debug.WriteLine($"Feature loading exception: {ex}")
+                ' Check for group-related exceptions specifically
+                If ex.Message.Contains("Group") OrElse ex.Message.Contains("group") OrElse ex.Message.Contains("14") Then
+                    LocalFeatureWarning = $"Local feature query unavailable: {ex.Message}"
+                Else
+                    LocalFeatureWarning = $"Local feature query failed: {ex.Message}"
+                End If
+                StatusMessage = "Local features unavailable. Build selection is still available."
+                System.Diagnostics.Debug.WriteLine($"Feature loading exception (non-fatal): {ex}")
             Finally
                 IsLoading = False
             End Try
@@ -559,11 +662,53 @@ Namespace ViewModels
 
         ''' <summary>
         ''' Initializes the view model and loads initial data.
+        ''' Decouples feed loading from local feature queries - both run independently.
         ''' </summary>
         Public Async Function InitializeAsync() As Task
-            Await ExecuteLoadFeaturesAsync()
-            Await ExecuteRefreshBuildsAsync()
+            ' Run both operations concurrently - feed loading should not be blocked by feature query failures
+            Dim feedTask = ExecuteRefreshBuildsAsync()
+            Dim featuresTask = ExecuteLoadFeaturesAsync()
+
+            ' Wait for both to complete independently
+            Try
+                Await Task.WhenAll(feedTask, featuresTask)
+            Catch ex As Exception
+                ' Individual tasks handle their own exceptions, but WhenAll may aggregate them
+                System.Diagnostics.Debug.WriteLine($"InitializeAsync error (non-fatal): {ex.Message}")
+            End Try
+
+            ' Update status to reflect overall state
+            UpdateOverallStatus()
         End Function
+
+        ''' <summary>
+        ''' Updates the status message to reflect the overall application state.
+        ''' </summary>
+        Private Sub UpdateOverallStatus()
+            Dim messages As New List(Of String)()
+
+            ' Check admin status
+            If Not IsRunningAsAdmin Then
+                messages.Add("Not running as admin")
+            End If
+
+            ' Check if builds were loaded
+            If AvailableBuilds.Count = 0 Then
+                messages.Add("No builds available")
+            Else
+                messages.Add($"Found {AvailableBuilds.Count} builds")
+            End If
+
+            ' Check if features were loaded (ignoring the warning placeholder)
+            Dim realFeatureCount = Features.Where(Function(f) f.Id <> 0 OrElse f.Name <> "No features loaded").Count()
+            If realFeatureCount > 0 Then
+                messages.Add($"{realFeatureCount} features")
+            ElseIf LocalFeatureWarning.Length > 0 Then
+                messages.Add("Local features unavailable")
+            End If
+
+            StatusMessage = String.Join(" | ", messages)
+        End Sub
 
 #Region "Publish Methods"
 
