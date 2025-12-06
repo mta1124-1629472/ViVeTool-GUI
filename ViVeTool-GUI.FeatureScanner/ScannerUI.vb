@@ -24,6 +24,19 @@ Public Class ScannerUI
     Private Delegate Sub AppendStdErrDelegate(text As String)
     Public BuildNumber As String = My.Computer.Registry.GetValue("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "CurrentBuildNumber", Nothing).ToString
 
+    ''' <summary>
+    ''' File extensions to skip during scanning (noisy/non-symbol files).
+    ''' These files do not contain symbol information and should be excluded
+    ''' to improve scan performance.
+    ''' </summary>
+    Private Shared ReadOnly NoisyFileExtensions As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase) From {
+        ".log", ".log1", ".log2", ".etl", ".dat", ".hve", ".tmp",
+        ".txt", ".xml", ".json", ".ini", ".config", ".manifest",
+        ".nls", ".mum", ".cat", ".msi", ".msp", ".cab", ".ttf", ".ttc",
+        ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico",
+        ".html", ".htm", ".css", ".js"
+    }
+
     ' Shared ToolTip for controls
     Private ReadOnly _toolTip As New ToolTip With {
         .AutoPopDelay = 15000,
@@ -179,7 +192,8 @@ Public Class ScannerUI
     End Sub
 
     ''' <summary>
-    ''' Downloads all the .pdb files of C:\Windows\*.*, C:\Program Files\*.*, C:\Program Files (x86)\*.* to the path specified in My.Settings.SymbolPath
+    ''' Downloads all the .pdb files of C:\Windows\*.* to the path specified in My.Settings.SymbolPath.
+    ''' Default fast scanning: only scans C:\Windows and skips noisy file types for better performance.
     ''' </summary>
     Private Sub DownloadPDBFiles()
         'Set up the File System Watcher
@@ -196,43 +210,44 @@ Public Class ScannerUI
             .RedirectStandardOutput = True 'Enables Redirection of Standard Output
         End With
 
-        'Get the .pdb files of C:\Windows\*.* - Recursively
-        Try
-            Proc.StartInfo.Arguments = "/r ""C:\Windows"" /oc """ & My.Settings.SymbolPath & """ /cn"
-            Proc.Start()
-            Proc.BeginErrorReadLine()
-            Proc.BeginOutputReadLine()
-            Proc.WaitForExit()
-            Proc.CancelOutputRead()
-            Proc.CancelErrorRead()
-        Catch ex As Exception
-            DialogHelper.ShowErrorDialog(" An Error occurred", "An Error occurred while downloading the symbol files." & vbNewLine & vbNewLine & "Check if you have access to symchk.exe and that your Antivirus isn't blocking it.")
-        End Try
+        ' Default fast scanning: Only scan C:\Windows (skip Program Files directories for performance)
+        Dim windowsDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows)
+        If String.IsNullOrEmpty(windowsDir) Then
+            windowsDir = "C:\Windows"
+        End If
 
-        'Get the .pdb files of C:\Program Files\*.* - Recursively
-        Try
-            Proc.StartInfo.Arguments = "/r ""C:\Program Files"" /oc """ & My.Settings.SymbolPath & """ /cn"
-            Proc.Start()
-            Proc.BeginErrorReadLine()
-            Proc.BeginOutputReadLine()
-            Proc.WaitForExit()
-            Proc.CancelOutputRead()
-            Proc.CancelErrorRead()
-        Catch ex As Exception
-            DialogHelper.ShowErrorDialog(" An Error occurred", "An Error occurred while downloading the symbol files." & vbNewLine & vbNewLine & "Check if you have access to symchk.exe and that your Antivirus isn't blocking it.")
-        End Try
+        ' Create a temporary file list with filtered files (skip noisy extensions)
+        Dim filteredFilesPath = IO.Path.Combine(IO.Path.GetTempPath(), "symchk_files_" & Guid.NewGuid().ToString("N") & ".txt")
 
-        'Get the .pdb files of C:\Program Files (x86)\*.* - Recursively
         Try
-            Proc.StartInfo.Arguments = "/r ""C:\Program Files (x86)"" /oc """ & My.Settings.SymbolPath & """ /cn"
-            Proc.Start()
-            Proc.BeginErrorReadLine()
-            Proc.BeginOutputReadLine()
-            Proc.WaitForExit()
-            Proc.CancelOutputRead()
-            Proc.CancelErrorRead()
+            ' Write filtered file list
+            WriteFilteredFileList(windowsDir, filteredFilesPath)
+
+            ' Check if filtered file list has any files
+            If IO.File.Exists(filteredFilesPath) AndAlso New IO.FileInfo(filteredFilesPath).Length > 0 Then
+                ' Use /if flag to read files from the specified input file
+                ' Uses Microsoft symbol server with cache + /oc to output to symbol path
+                Proc.StartInfo.Arguments = "/if """ & filteredFilesPath & """ /s srv*""" & My.Settings.SymbolPath & """*https://msdl.microsoft.com/download/symbols /oc """ & My.Settings.SymbolPath & """ /cn"
+                Proc.Start()
+                Proc.BeginErrorReadLine()
+                Proc.BeginOutputReadLine()
+                Proc.WaitForExit()
+                Proc.CancelOutputRead()
+                Proc.CancelErrorRead()
+            Else
+                AppendStdOut("No scannable files found in " & windowsDir & " after filtering noisy extensions." & Environment.NewLine)
+            End If
         Catch ex As Exception
             DialogHelper.ShowErrorDialog(" An Error occurred", "An Error occurred while downloading the symbol files." & vbNewLine & vbNewLine & "Check if you have access to symchk.exe and that your Antivirus isn't blocking it.")
+        Finally
+            ' Clean up the temporary file list
+            Try
+                If IO.File.Exists(filteredFilesPath) Then
+                    IO.File.Delete(filteredFilesPath)
+                End If
+            Catch
+                ' Ignore cleanup errors
+            End Try
         End Try
 
         'Disable the current tab and move to the Scan PDB Tab
@@ -243,6 +258,73 @@ Public Class ScannerUI
                End Sub)
         ScanPDBFiles()
     End Sub
+
+    ''' <summary>
+    ''' Writes a filtered list of files to scan, excluding noisy file extensions.
+    ''' </summary>
+    ''' <param name="directory">The directory to enumerate files from.</param>
+    ''' <param name="outputPath">The path to write the filtered file list.</param>
+    Private Sub WriteFilteredFileList(directory As String, outputPath As String)
+        Using writer As New IO.StreamWriter(outputPath, False, System.Text.Encoding.UTF8)
+            Try
+                ' Enumerate files recursively and filter by extension
+                For Each filePath In EnumerateFilesRecursive(directory)
+                    Dim extension = IO.Path.GetExtension(filePath)
+                    If Not NoisyFileExtensions.Contains(extension) Then
+                        writer.WriteLine(filePath)
+                    End If
+                Next
+            Catch ex As Exception
+                ' Log enumeration errors but don't fail the entire operation
+                Diagnostics.Debug.WriteLine("Error enumerating files in " & directory & ": " & ex.Message)
+            End Try
+        End Using
+    End Sub
+
+    ''' <summary>
+    ''' Recursively enumerates files in a directory, handling access denied errors gracefully.
+    ''' </summary>
+    ''' <param name="directory">The directory to enumerate.</param>
+    ''' <returns>An enumerable of file paths.</returns>
+    Private Iterator Function EnumerateFilesRecursive(directory As String) As IEnumerable(Of String)
+        ' First, yield files in the current directory
+        Dim files As IEnumerable(Of String) = Nothing
+        Try
+            files = IO.Directory.EnumerateFiles(directory)
+        Catch ex As UnauthorizedAccessException
+            ' Skip directories we can't access
+        Catch ex As IO.DirectoryNotFoundException
+            ' Skip directories that don't exist
+        Catch ex As IO.IOException
+            ' Skip directories with I/O errors
+        End Try
+
+        If files IsNot Nothing Then
+            For Each file In files
+                Yield file
+            Next
+        End If
+
+        ' Then recursively enumerate subdirectories
+        Dim subdirectories As IEnumerable(Of String) = Nothing
+        Try
+            subdirectories = IO.Directory.EnumerateDirectories(directory)
+        Catch ex As UnauthorizedAccessException
+            ' Skip directories we can't access
+        Catch ex As IO.DirectoryNotFoundException
+            ' Skip directories that don't exist
+        Catch ex As IO.IOException
+            ' Skip directories with I/O errors
+        End Try
+
+        If subdirectories IsNot Nothing Then
+            For Each subdir In subdirectories
+                For Each file In EnumerateFilesRecursive(subdir)
+                    Yield file
+                Next
+            Next
+        End If
+    End Function
 
     ''' <summary>
     ''' If the Process encounters an Error, send the Error Output to AppendStdErr
