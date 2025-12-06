@@ -26,7 +26,7 @@ Public Class GUI
     Private Const WM_SYSCOMMAND As Integer = &H112
     Private Const MF_STRING As Integer = &H0
     Private Const MF_SEPARATOR As Integer = &H800
-    
+
     ''' <summary>
     ''' GitHub repository owner for update checks and User-Agent identification
     ''' </summary>
@@ -139,18 +139,7 @@ Public Class GUI
     ''' </summary>
     Private Sub BackgroundTasks()
         'Check for Updates
-        Try
-            AutoUpdater.Start(String.Format("https://raw.githubusercontent.com/{0}/ViVeTool-GUI/master/UpdaterXML.xml", GITHUB_REPO_OWNER))
-        Catch ex As WebException
-            'Silently fail if auto-updater cannot be reached to avoid startup crashes
-            Diagnostics.Debug.WriteLine("AutoUpdater failed (WebException): " & ex.Message)
-        Catch ex As System.Net.Http.HttpRequestException
-            'Silently fail if auto-updater has HTTP errors
-            Diagnostics.Debug.WriteLine("AutoUpdater failed (HttpRequestException): " & ex.Message)
-        Catch ex As Exception
-            'Catch any other unexpected exceptions
-            Diagnostics.Debug.WriteLine("AutoUpdater failed (Unexpected): " & ex.Message)
-        End Try
+        AutoUpdater.Start("https://raw.githubusercontent.com/PeterStrick/ViVeTool-GUI/master/UpdaterXML.xml")
 
         'Populate the Build Combo Box, but first check if the PC is connected to the Internet, otherwise the GUI will crash without giving any helpful Information on WHY
         PopulateBuildComboBox_Check()
@@ -392,35 +381,57 @@ Public Class GUI
                 'Collect all row data first to avoid repeated UI thread invocations
                 Dim rowData As New List(Of Object())
 
-                For Each Line In IO.File.ReadAllLines(OFD.FileName)
+                For Each rawLine In IO.File.ReadAllLines(OFD.FileName)
+                    Dim Line = rawLine.Trim()
                     If Line = "## Unknown:" Then
                         LineStage = "Modifiable"
+                        Continue For
                     ElseIf Line = "## Always Enabled:" Then
                         LineStage = "Always Enabled"
+                        Continue For
                     ElseIf Line = "## Enabled By Default:" Then
                         LineStage = "Enabled By Default"
+                        Continue For
                     ElseIf Line = "## Disabled By Default:" Then
                         LineStage = "Disabled by Default"
+                        Continue For
                     ElseIf Line = "## Always Disabled:" Then
                         LineStage = "Always Disabled"
+                        Continue For
                     End If
-                    'Split the Line at the :
-                    Dim Str As String() = Line.Split(CChar(":"))
 
-                    'If the Line is not empty, continue
-                    If Line IsNot "" AndAlso Line.Contains("#") = False Then
-                        'Remove any Spaces from the first Str Array (Feature Name) and second Str Array (Feature ID)
-                        Dim featureName As String = Str(0).Replace(" ", "")
-                        Dim featureId As String = Str(1).Replace(" ", "")
-                        'Get the Feature Enabled State from the currently processing line.
-                        'RtlFeatureManager.QueryFeatureConfiguration will return Enabled, Disabled or throw a NullReferenceException for Default
-                        Try
-                            Dim State As String = RtlFeatureManager.QueryFeatureConfiguration(CUInt(featureId), FeatureConfigurationSection.Runtime).EnabledState.ToString
-                            rowData.Add(New Object() {featureName, featureId, State, LineStage})
-                        Catch ex As NullReferenceException
-                            rowData.Add(New Object() {featureName, featureId, "Default", LineStage})
-                        End Try
+                    If String.IsNullOrWhiteSpace(Line) OrElse Line.StartsWith("#") OrElse Not Line.Contains(":") Then
+                        Continue For
                     End If
+
+                    Dim parts As String() = Line.Split(New Char() {":"c}, 2)
+                    If parts.Length < 2 Then Continue For
+
+                    Dim featureName As String = parts(0).Replace(" ", "").Trim()
+                    Dim featureIdStr As String = parts(1).Replace(" ", "").Trim()
+
+                    Dim featureIdValue As UInteger
+                    If Not UInteger.TryParse(featureIdStr, featureIdValue) Then
+                        ' invalid ID: treat as default / skip
+                        rowData.Add(New Object() {featureName, featureIdStr, "Default", LineStage})
+                        Continue For
+                    End If
+
+                    Dim State As String = "Default"
+                    Try
+                        Dim cfg = RtlFeatureManager.QueryFeatureConfiguration(featureIdValue, FeatureConfigurationSection.Runtime)
+                        If cfg IsNot Nothing Then
+                            ' EnabledState is a value type; directly convert to string
+                            State = cfg.EnabledState.ToString()
+                        Else
+                            State = "Default"
+                        End If
+                    Catch
+                        ' Any unexpected exception here: treat as Default for display
+                        State = "Default"
+                    End Try
+
+                    rowData.Add(New Object() {featureName, featureIdStr, State, LineStage})
                 Next
 
                 'Add all rows to the grid in a single batch on the UI thread
