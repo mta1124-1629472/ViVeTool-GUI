@@ -4,9 +4,7 @@
 
 ![GitHub all releases](https://img.shields.io/github/downloads/peterstrick/vivetool-gui/total?label=downloads)
 ![GitHub License](https://img.shields.io/github/license/peterstrick/vivetool-gui)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/peterstrick/vivetool-gui)
-[![Discord Community](https://dcbadge.vercel.app/api/server/8vDFXEucp2?style=flat)](https://discord.gg/8vDFXEucp2)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PeterStrick_ViVeTool-GUI&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PeterStrick_ViVeTool-GUI)
+
 
 **Windows Feature Control GUI based on ViVeTool**
 
@@ -112,7 +110,6 @@ ViVeTool GUI is a modern, user-friendly graphical interface for managing hidden 
 
 **Not Implemented:**
 - ❌ Windows 11 Fluent Design
-- ❌ Advanced theme customization (light/dark/system modes)
 - ❌ Accent color integration
 - ❌ Smart caching system (ETag-based)
 - ❌ GitHub Actions publishing
@@ -131,7 +128,6 @@ ViVeTool GUI is a modern, user-friendly graphical interface for managing hidden 
 |---------|------------|----------------|
 | **UI Framework** | Windows 11 Fluent | Classic WinForms |
 | **Theme Support** | Light/Dark/System | Windows Default |
-| **Accent Color Integration** | ✅ | ❌ |
 | **Multi-Language Support** | ❌ | ✅ |
 | **Store Repair Tools** | ❌ | ✅ |
 | **A/B Testing Fix** | ❌ | ✅ |
