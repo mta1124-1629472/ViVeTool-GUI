@@ -22,11 +22,16 @@ jobs:
       - uses: actions/checkout@v6
       - uses: nuget/setup-nuget@323ab0502cd38fdc493335025a96c8fdb0edc71f
       - uses: microsoft/setup-msbuild@v2.0.0
-      
+
+      - name: Install .NET Core 3.1 runtime
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '3.1.x'
+
       - name: Set up projects for analysis
         uses: security-code-scan/security-code-scan-add-action@2439fb4aaeda4ad590a7c8bde327d159d03875fd
         
-      - name: Restore dependencies	
+      - name: Restore dependencies 
         run: nuget restore
 
       - name: Build
