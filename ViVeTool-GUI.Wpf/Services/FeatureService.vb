@@ -135,7 +135,9 @@ Namespace Services
                 runtimeConfigs = RtlFeatureManager.QueryAllFeatureConfigurations(FeatureConfigurationSection.Runtime)
             Catch ex As Exception
                 ' Log warning but continue - we may still get boot configs
-                Dim warning = $"Warning: Could not query runtime features: {ex.Message}"
+                Dim warning = If(ex.Message.Contains("Group"),
+                    "Warning: Could not query runtime features. The library encountered features with Group values above its supported maximum (14).",
+                    $"Warning: Could not query runtime features: {ex.Message}")
                 _warnings.Add(warning)
                 System.Diagnostics.Debug.WriteLine(warning)
             End Try
@@ -145,7 +147,9 @@ Namespace Services
                 bootConfigs = RtlFeatureManager.QueryAllFeatureConfigurations(FeatureConfigurationSection.Boot)
             Catch ex As Exception
                 ' Log warning but continue - we may still have runtime configs
-                Dim warning = $"Warning: Could not query boot features: {ex.Message}"
+                Dim warning = If(ex.Message.Contains("Group"),
+                    "Warning: Could not query boot features. The library encountered features with Group values above its supported maximum (14).",
+                    $"Warning: Could not query boot features: {ex.Message}")
                 _warnings.Add(warning)
                 System.Diagnostics.Debug.WriteLine(warning)
             End Try
@@ -229,23 +233,29 @@ Namespace Services
                 result.Add(kvp.Value)
             Next
 
-            ' If we have warnings but also loaded some features, don't add an error row
-            ' Just store the combined warning message for display
+            ' Handle warnings and error messages
             If _warnings.Count > 0 Then
                 _lastErrorMessage = String.Join("; ", _warnings)
             Else
                 _lastErrorMessage = String.Empty
             End If
 
-            ' If no features were loaded and we have warnings, add a warning indicator
-            ' (but not an error that blocks usage)
-            If result.Count = 0 AndAlso _warnings.Count > 0 Then
+            ' If no features were loaded, add an informational item that won't break the UI
+            If result.Count = 0 Then
+                Dim message As String
+                If _warnings.Count > 0 Then
+                    message = "Unable to load system features due to library compatibility issues. " &
+                              "Please check for library updates or use an alternative method to manage features."
+                Else
+                    message = "No features found on this system."
+                End If
+
                 result.Add(New FeatureItem(
                     0,
-                    "No features loaded",
-                    "Warning",
+                    "No features available",
+                    "Information",
                     False,
-                    $"Could not load features: {_lastErrorMessage}. You can still select a build and view feature lists."
+                    message
                 ))
             End If
 
