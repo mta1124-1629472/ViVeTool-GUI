@@ -26,6 +26,11 @@ Public Class GUI
     Private Const WM_SYSCOMMAND As Integer = &H112
     Private Const MF_STRING As Integer = &H0
     Private Const MF_SEPARATOR As Integer = &H800
+    
+    ''' <summary>
+    ''' GitHub repository owner for update checks and User-Agent identification
+    ''' </summary>
+    Private Const GITHUB_REPO_OWNER As String = "mta1124-1629472"
     ReadOnly TempJSONUsedInDevelopment As String = "{
   ""sha"": ""afeb63367f1bd15d63cfe30541a9a6ee51b940dd"",
   ""url"": ""https://api.github.com/repos/riverar/mach2/git/trees/afeb63367f1bd15d63cfe30541a9a6ee51b940dd"",
@@ -79,7 +84,7 @@ Public Class GUI
     ''' </summary>
     Private ReadOnly Property UserAgent As String
         Get
-            Return String.Format("{0}/{1} (+https://github.com/{2}/ViVeTool-GUI)", My.Application.Info.ProductName, My.Application.Info.Version.ToString, "mta1124-1629472")
+            Return String.Format("{0}/{1} (+https://github.com/{2}/ViVeTool-GUI)", My.Application.Info.ProductName, My.Application.Info.Version.ToString, GITHUB_REPO_OWNER)
         End Get
     End Property
 
@@ -135,10 +140,16 @@ Public Class GUI
     Private Sub BackgroundTasks()
         'Check for Updates
         Try
-            AutoUpdater.Start("https://raw.githubusercontent.com/mta1124-1629472/ViVeTool-GUI/master/UpdaterXML.xml")
-        Catch ex As Exception
+            AutoUpdater.Start(String.Format("https://raw.githubusercontent.com/{0}/ViVeTool-GUI/master/UpdaterXML.xml", GITHUB_REPO_OWNER))
+        Catch ex As WebException
             'Silently fail if auto-updater cannot be reached to avoid startup crashes
-            Diagnostics.Debug.WriteLine("AutoUpdater failed: " & ex.Message)
+            Diagnostics.Debug.WriteLine("AutoUpdater failed (WebException): " & ex.Message)
+        Catch ex As System.Net.Http.HttpRequestException
+            'Silently fail if auto-updater has HTTP errors
+            Diagnostics.Debug.WriteLine("AutoUpdater failed (HttpRequestException): " & ex.Message)
+        Catch ex As Exception
+            'Catch any other unexpected exceptions
+            Diagnostics.Debug.WriteLine("AutoUpdater failed (Unexpected): " & ex.Message)
         End Try
 
         'Populate the Build Combo Box, but first check if the PC is connected to the Internet, otherwise the GUI will crash without giving any helpful Information on WHY
