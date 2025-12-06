@@ -73,6 +73,20 @@ ViVeTool GUI is a modern, user-friendly graphical interface for managing hidden 
 - **Theme Customization** - Dark, light, and system mode support
 - **Feature Scanner** - Scan your Windows build to discover hidden features
 
+## Documentation
+
+### 📖 User Documentation
+- **[FAQ.md](FAQ.md)** - Frequently asked questions and answers (50+ topics)
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Step-by-step problem solving guide
+- **[KNOWN_ISSUES.md](KNOWN_ISSUES.md)** - Known limitations and workarounds
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+
+### 👨‍💻 Developer Documentation  
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development setup, architecture, and contribution guidelines
+- **[CODE_ANALYSIS.md](CODE_ANALYSIS.md)** - **NEW** Comprehensive WPF vs Legacy analysis with roadmap
+- **[WPF_ISSUES_QUICK_FIX.md](WPF_ISSUES_QUICK_FIX.md)** - **NEW** Quick action items with ready-to-use code examples
+- **[building.md](building.md)** - Build instructions and compilation guide
+
 ## Version Comparison: WPF vs Legacy
 
 ### WPF Version (.NET 9) - Recommended
@@ -87,8 +101,8 @@ ViVeTool GUI is a modern, user-friendly graphical interface for managing hidden 
 - ✅ **GitHub Actions Publishing** - Direct feature list publishing for maintainers
 
 **Not Implemented:**
-- ❌ Store/A/B Testing repair tools
-- ❌ Multi-language localization
+- ❌ Store/A/B Testing repair tools (planned for next release)
+- ❌ Multi-language localization (planned for next release)
 
 **Recommended For:**
 - Windows 11 users
@@ -108,24 +122,16 @@ ViVeTool GUI is a modern, user-friendly graphical interface for managing hidden 
 - ✅ Store/A/B Testing repair tools
 - ✅ LastKnownGood Store fixing capabilities
 
-**Not Implemented:**
-- ❌ Windows 11 Fluent Design
-- ❌ Accent color integration
-- ❌ Smart caching system (ETag-based)
-- ❌ GitHub Actions publishing
-- ❌ Modern .NET runtime benefits
-
 **Recommended For:**
 - Windows 10 users
 - Users needing store repair functionality
 - Users requiring multi-language support
 - Legacy system compatibility
-- Minimal resource usage requirements
 
 ### Direct Feature Comparison
 
 | Feature | WPF Version | Legacy WinForms |
-|---------|------------|----------------|
+|---------|------------|-------------|
 | **UI Framework** | Windows 11 Fluent | Classic WinForms |
 | **Theme Support** | Light/Dark/System | Windows Default |
 | **Multi-Language Support** | ❌ | ✅ |
@@ -136,15 +142,27 @@ ViVeTool GUI is a modern, user-friendly graphical interface for managing hidden 
 | **GitHub Publishing** | ✅ Native | ❌ |
 | **Keyboard Accessibility** | ✅ Enhanced | ⚠️ Standard |
 | **Performance** | ✅ Modern .NET 9 | ⚠️ .NET Framework |
-| **Security Updates** | ✅ Current | ⚠️ Legacy support |
 | **Windows 10 Support** | ✅ Works | ✅ Optimized |
 | **Windows 11 Support** | ✅ Optimized | ✅ Works |
+
+### Choosing Your Version
+
+**Use WPF if you:**
+- Are on Windows 11
+- Want the latest UI/UX improvements
+- Don't need store repair functionality
+- Want GitHub feature publishing
+
+**Use Legacy (WinForms) if you:**
+- Are on Windows 10
+- Need store repair functionality
+- Require multi-language support
+- Prefer the classic interface
+- Need backward compatibility
 
 ### Migration Path
 
 If you're currently using the **Legacy WinForms version**, see [MIGRATION_NOTES.md](https://github.com/mta1124-1629472/ViVeTool-GUI/blob/master/MIGRATION_NOTES.md) for detailed migration instructions to the new WPF version.
-
-**Note:** Some features from the Legacy version (Store repair, multi-language support) are not yet implemented in the WPF version. This is being tracked for future releases.
 
 ## Feature Feed System
 
@@ -217,11 +235,16 @@ dotnet build -c Release
 - Ensure you're connected to the internet (first-time setup)
 - Check that your Windows build number is supported
 - Try clearing the local cache and restarting
+- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed help
 
 ### "Access Denied" Errors
 - Run ViVeTool GUI as Administrator
 - Ensure your user account has sufficient privileges
 - Check Windows Defender or antivirus software isn't blocking the app
+- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for more solutions
+
+### Need More Help?
+Check [FAQ.md](FAQ.md), [TROUBLESHOOTING.md](TROUBLESHOOTING.md), or [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for comprehensive guidance.
 
 ## Disclaimer
 
@@ -259,7 +282,9 @@ Contributions are welcome! Whether it's:
 - ✨ Feature suggestions and implementation
 - 📚 Documentation improvements
 
-See our guidelines in [building.md](https://github.com/mta1124-1629472/ViVeTool-GUI/blob/master/building.md) for more information.
+See our guidelines in [DEVELOPMENT.md](DEVELOPMENT.md) and [building.md](https://github.com/mta1124-1629472/ViVeTool-GUI/blob/master/building.md) for more information.
+
+**Want to help with WPF improvements?** Start with [CODE_ANALYSIS.md](CODE_ANALYSIS.md) and [WPF_ISSUES_QUICK_FIX.md](WPF_ISSUES_QUICK_FIX.md) for priority issues and ready-to-use code.
 
 ---
 
