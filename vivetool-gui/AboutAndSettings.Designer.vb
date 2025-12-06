@@ -57,7 +57,7 @@ Partial Class AboutAndSettings
         Me.TabControl_Main.Location = New System.Drawing.Point(0, 0)
         Me.TabControl_Main.Name = "TabControl_Main"
         Me.TabControl_Main.SelectedIndex = 0
-        Me.TabControl_Main.Size = New System.Drawing.Size(384, 328)
+        Me.TabControl_Main.Size = New System.Drawing.Size(450, 360)
         Me.TabControl_Main.TabIndex = 0
         '
         'TabPage_About
@@ -71,7 +71,7 @@ Partial Class AboutAndSettings
         Me.TabPage_About.Location = New System.Drawing.Point(4, 25)
         Me.TabPage_About.Name = "TabPage_About"
         Me.TabPage_About.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage_About.Size = New System.Drawing.Size(376, 299)
+        Me.TabPage_About.Size = New System.Drawing.Size(442, 331)
         Me.TabPage_About.TabIndex = 0
         Me.TabPage_About.Text = "  About ViVeTool-GUI"
         Me.TabPage_About.UseVisualStyleBackColor = True
@@ -90,7 +90,7 @@ Partial Class AboutAndSettings
         '
         Me.RL_Comments.Location = New System.Drawing.Point(61, 137)
         Me.RL_Comments.Name = "RL_Comments"
-        Me.RL_Comments.Size = New System.Drawing.Size(300, 150)
+        Me.RL_Comments.Size = New System.Drawing.Size(340, 180)
         Me.RL_Comments.TabIndex = 8
         Me.RL_Comments.Text = "Icons used in this Application are from Icons8. Font Awesome Icons used when the" &
     "re isn't an Icons8 Icon available." & vbNewLine & "ViVeTool-GUI uses ViVe by @thebookisclosed." & vbNewLine & vbNewLine &
@@ -110,7 +110,7 @@ Partial Class AboutAndSettings
         '
         Me.RL_Description.Location = New System.Drawing.Point(61, 84)
         Me.RL_Description.Name = "RL_Description"
-        Me.RL_Description.Size = New System.Drawing.Size(281, 47)
+        Me.RL_Description.Size = New System.Drawing.Size(340, 47)
         Me.RL_Description.TabIndex = 7
         Me.RL_Description.Text = "CHANGED AT RUNTIME - Description"
         '
@@ -140,7 +140,7 @@ Partial Class AboutAndSettings
         Me.TabPage_Settings.Location = New System.Drawing.Point(4, 25)
         Me.TabPage_Settings.Name = "TabPage_Settings"
         Me.TabPage_Settings.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage_Settings.Size = New System.Drawing.Size(376, 299)
+        Me.TabPage_Settings.Size = New System.Drawing.Size(442, 331)
         Me.TabPage_Settings.TabIndex = 1
         Me.TabPage_Settings.Text = "  Settings"
         Me.TabPage_Settings.UseVisualStyleBackColor = True
@@ -148,9 +148,9 @@ Partial Class AboutAndSettings
         'GroupBox_Other
         '
         Me.GroupBox_Other.Controls.Add(Me.RB_ViVeTool_GUI_FeatureScanner)
-        Me.GroupBox_Other.Location = New System.Drawing.Point(6, 198)
+        Me.GroupBox_Other.Location = New System.Drawing.Point(6, 220)
         Me.GroupBox_Other.Name = "GroupBox_Other"
-        Me.GroupBox_Other.Size = New System.Drawing.Size(360, 80)
+        Me.GroupBox_Other.Size = New System.Drawing.Size(430, 90)
         Me.GroupBox_Other.TabIndex = 5
         Me.GroupBox_Other.TabStop = False
         Me.GroupBox_Other.Text = "Other"
@@ -159,9 +159,10 @@ Partial Class AboutAndSettings
         '
         Me.RB_ViVeTool_GUI_FeatureScanner.Image = Global.ViVeTool_GUI.My.Resources.Resources.icons8_portrait_mode_scanning_24px
         Me.RB_ViVeTool_GUI_FeatureScanner.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-        Me.RB_ViVeTool_GUI_FeatureScanner.Location = New System.Drawing.Point(43, 25)
+        Me.RB_ViVeTool_GUI_FeatureScanner.Location = New System.Drawing.Point(50, 30)
         Me.RB_ViVeTool_GUI_FeatureScanner.Name = "RB_ViVeTool_GUI_FeatureScanner"
-        Me.RB_ViVeTool_GUI_FeatureScanner.Size = New System.Drawing.Size(274, 30)
+        Me.RB_ViVeTool_GUI_FeatureScanner.Padding = New System.Windows.Forms.Padding(4)
+        Me.RB_ViVeTool_GUI_FeatureScanner.Size = New System.Drawing.Size(300, 40)
         Me.RB_ViVeTool_GUI_FeatureScanner.TabIndex = 0
         Me.RB_ViVeTool_GUI_FeatureScanner.Text = "Scan this Build for Feature IDs"
         Me.RB_ViVeTool_GUI_FeatureScanner.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText
@@ -171,9 +172,9 @@ Partial Class AboutAndSettings
         '
         Me.GroupBox_Theming.Controls.Add(Me.CB_UseSystemTheme)
         Me.GroupBox_Theming.Controls.Add(Me.CB_ThemeToggle)
-        Me.GroupBox_Theming.Location = New System.Drawing.Point(6, 106)
+        Me.GroupBox_Theming.Location = New System.Drawing.Point(6, 110)
         Me.GroupBox_Theming.Name = "GroupBox_Theming"
-        Me.GroupBox_Theming.Size = New System.Drawing.Size(360, 80)
+        Me.GroupBox_Theming.Size = New System.Drawing.Size(430, 100)
         Me.GroupBox_Theming.TabIndex = 1
         Me.GroupBox_Theming.TabStop = False
         Me.GroupBox_Theming.Text = "Theming"
@@ -182,9 +183,10 @@ Partial Class AboutAndSettings
         '
         Me.CB_UseSystemTheme.Appearance = System.Windows.Forms.Appearance.Button
         Me.CB_UseSystemTheme.Image = Global.ViVeTool_GUI.My.Resources.Resources.icons8_change_theme_24px
-        Me.CB_UseSystemTheme.Location = New System.Drawing.Point(180, 23)
+        Me.CB_UseSystemTheme.Location = New System.Drawing.Point(200, 30)
         Me.CB_UseSystemTheme.Name = "CB_UseSystemTheme"
-        Me.CB_UseSystemTheme.Size = New System.Drawing.Size(158, 35)
+        Me.CB_UseSystemTheme.Padding = New System.Windows.Forms.Padding(4)
+        Me.CB_UseSystemTheme.Size = New System.Drawing.Size(190, 45)
         Me.CB_UseSystemTheme.TabIndex = 5
         Me.CB_UseSystemTheme.Text = "  Use System Theme"
         Me.CB_UseSystemTheme.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText
@@ -194,11 +196,12 @@ Partial Class AboutAndSettings
         '
         Me.CB_ThemeToggle.Appearance = System.Windows.Forms.Appearance.Button
         Me.CB_ThemeToggle.Image = Global.ViVeTool_GUI.My.Resources.Resources.icons8_sun_24
-        Me.CB_ThemeToggle.Location = New System.Drawing.Point(22, 23)
+        Me.CB_ThemeToggle.Location = New System.Drawing.Point(22, 30)
         Me.CB_ThemeToggle.Name = "CB_ThemeToggle"
-        Me.CB_ThemeToggle.Size = New System.Drawing.Size(138, 35)
+        Me.CB_ThemeToggle.Padding = New System.Windows.Forms.Padding(4)
+        Me.CB_ThemeToggle.Size = New System.Drawing.Size(155, 45)
         Me.CB_ThemeToggle.TabIndex = 4
-        Me.CB_ThemeToggle.Text = "  Light Theme"
+        Me.CB_ThemeToggle.Text = "  Dark Theme"
         Me.CB_ThemeToggle.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText
         Me.CB_ThemeToggle.UseVisualStyleBackColor = True
         '
@@ -208,7 +211,7 @@ Partial Class AboutAndSettings
         Me.GroupBox_Behaviour.Controls.Add(Me.CB_AutoLoad)
         Me.GroupBox_Behaviour.Location = New System.Drawing.Point(6, 12)
         Me.GroupBox_Behaviour.Name = "GroupBox_Behaviour"
-        Me.GroupBox_Behaviour.Size = New System.Drawing.Size(360, 80)
+        Me.GroupBox_Behaviour.Size = New System.Drawing.Size(430, 90)
         Me.GroupBox_Behaviour.TabIndex = 0
         Me.GroupBox_Behaviour.TabStop = False
         Me.GroupBox_Behaviour.Text = "Behaviour"
@@ -216,16 +219,16 @@ Partial Class AboutAndSettings
         'RL_AutoLoad
         '
         Me.RL_AutoLoad.AutoSize = True
-        Me.RL_AutoLoad.Location = New System.Drawing.Point(48, 32)
+        Me.RL_AutoLoad.Location = New System.Drawing.Point(48, 40)
         Me.RL_AutoLoad.Name = "RL_AutoLoad"
-        Me.RL_AutoLoad.Size = New System.Drawing.Size(177, 17)
+        Me.RL_AutoLoad.Size = New System.Drawing.Size(210, 17)
         Me.RL_AutoLoad.TabIndex = 0
         Me.RL_AutoLoad.Text = "Automatically load the latest Build"
         '
         'CB_AutoLoad
         '
         Me.CB_AutoLoad.AutoSize = True
-        Me.CB_AutoLoad.Location = New System.Drawing.Point(280, 32)
+        Me.CB_AutoLoad.Location = New System.Drawing.Point(320, 40)
         Me.CB_AutoLoad.Name = "CB_AutoLoad"
         Me.CB_AutoLoad.Size = New System.Drawing.Size(18, 17)
         Me.CB_AutoLoad.TabIndex = 0
@@ -235,7 +238,7 @@ Partial Class AboutAndSettings
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(384, 328)
+        Me.ClientSize = New System.Drawing.Size(450, 360)
         Me.Controls.Add(Me.TabControl_Main)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)

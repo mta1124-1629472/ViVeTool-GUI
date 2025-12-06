@@ -25,7 +25,7 @@ Partial Class ScannerUI
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(ScannerUI))
         Me.TabControl_Main = New System.Windows.Forms.TabControl()
         Me.TabPage_Setup = New System.Windows.Forms.TabPage()
-        Me.RL_Introduction = New System.Windows.Forms.Label()
+        Me.LL_Introduction = New System.Windows.Forms.LinkLabel()
         Me.RL_SymbolPath = New System.Windows.Forms.Label()
         Me.RL_DbgPath = New System.Windows.Forms.Label()
         Me.RB_Continue = New System.Windows.Forms.Button()
@@ -89,7 +89,7 @@ Partial Class ScannerUI
         '
         'TabPage_Setup
         '
-        Me.TabPage_Setup.Controls.Add(Me.RL_Introduction)
+        Me.TabPage_Setup.Controls.Add(Me.LL_Introduction)
         Me.TabPage_Setup.Controls.Add(Me.RL_SymbolPath)
         Me.TabPage_Setup.Controls.Add(Me.RL_DbgPath)
         Me.TabPage_Setup.Controls.Add(Me.RB_Continue)
@@ -106,22 +106,23 @@ Partial Class ScannerUI
         Me.TabPage_Setup.Text = "Introduction and Setup"
         Me.TabPage_Setup.UseVisualStyleBackColor = True
         '
-        'RL_Introduction
+        'LL_Introduction
         '
-        Me.RL_Introduction.Font = New System.Drawing.Font("Segoe UI", 11.0!)
-        Me.RL_Introduction.Location = New System.Drawing.Point(0, 3)
-        Me.RL_Introduction.Name = "RL_Introduction"
-        Me.RL_Introduction.Size = New System.Drawing.Size(820, 293)
-        Me.RL_Introduction.TabIndex = 6
-        Me.RL_Introduction.Text = "Welcome to ViVeTool GUI - Feature Scanner!" & vbNewLine & vbNewLine & "This tool will help you scan your system for Feature IDs." & vbNewLine & vbNewLine & "To get started, you need to:" & vbNewLine & "1. Install the Windows SDK with Debugging Tools" & vbNewLine & "2. Specify the path to symchk.exe" & vbNewLine & "3. Choose a folder to store the downloaded debug symbols"
-        Me.RL_Introduction.TextAlign = System.Drawing.ContentAlignment.TopCenter
+        Me.LL_Introduction.Font = New System.Drawing.Font("Segoe UI", 11.0!)
+        Me.LL_Introduction.Location = New System.Drawing.Point(0, 3)
+        Me.LL_Introduction.Name = "LL_Introduction"
+        Me.LL_Introduction.Size = New System.Drawing.Size(820, 293)
+        Me.LL_Introduction.TabIndex = 6
+        Me.LL_Introduction.TabStop = True
+        Me.LL_Introduction.Text = "Welcome to ViVeTool GUI - Feature Scanner!" & vbNewLine & vbNewLine & "This tool will help you scan your system for Feature IDs." & vbNewLine & vbNewLine & "To get started, you need to:" & vbNewLine & "1. Install the Windows SDK with Debugging Tools" & vbNewLine & "2. Specify the path to symchk.exe" & vbNewLine & "3. Choose a folder to store the downloaded debug symbols"
+        Me.LL_Introduction.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         '
         'RL_SymbolPath
         '
         Me.RL_SymbolPath.AutoSize = True
         Me.RL_SymbolPath.Location = New System.Drawing.Point(6, 399)
         Me.RL_SymbolPath.Name = "RL_SymbolPath"
-        Me.RL_SymbolPath.Size = New System.Drawing.Size(119, 17)
+        Me.RL_SymbolPath.Size = New System.Drawing.Size(140, 17)
         Me.RL_SymbolPath.TabIndex = 1
         Me.RL_SymbolPath.Text = "Path to store PDB Files"
         '
@@ -130,7 +131,7 @@ Partial Class ScannerUI
         Me.RL_DbgPath.AutoSize = True
         Me.RL_DbgPath.Location = New System.Drawing.Point(6, 356)
         Me.RL_DbgPath.Name = "RL_DbgPath"
-        Me.RL_DbgPath.Size = New System.Drawing.Size(102, 17)
+        Me.RL_DbgPath.Size = New System.Drawing.Size(140, 17)
         Me.RL_DbgPath.TabIndex = 0
         Me.RL_DbgPath.Text = "Path to symchk.exe"
         '
@@ -181,18 +182,18 @@ Partial Class ScannerUI
         '
         'RTB_SymbolPath
         '
-        Me.RTB_SymbolPath.Location = New System.Drawing.Point(131, 394)
+        Me.RTB_SymbolPath.Location = New System.Drawing.Point(155, 396)
         Me.RTB_SymbolPath.Name = "RTB_SymbolPath"
         Me.RTB_SymbolPath.ReadOnly = True
-        Me.RTB_SymbolPath.Size = New System.Drawing.Size(581, 22)
+        Me.RTB_SymbolPath.Size = New System.Drawing.Size(550, 22)
         Me.RTB_SymbolPath.TabIndex = 1
         '
         'RTB_DbgPath
         '
-        Me.RTB_DbgPath.Location = New System.Drawing.Point(131, 351)
+        Me.RTB_DbgPath.Location = New System.Drawing.Point(155, 353)
         Me.RTB_DbgPath.Name = "RTB_DbgPath"
         Me.RTB_DbgPath.ReadOnly = True
-        Me.RTB_DbgPath.Size = New System.Drawing.Size(581, 22)
+        Me.RTB_DbgPath.Size = New System.Drawing.Size(550, 22)
         Me.RTB_DbgPath.TabIndex = 0
         '
         'TabPage_DownloadPDB
@@ -504,7 +505,7 @@ Partial Class ScannerUI
     Friend WithEvents RLE_StatusAndInfoLabel As System.Windows.Forms.ToolStripStatusLabel
     Friend WithEvents RL_SymbolPath As System.Windows.Forms.Label
     Friend WithEvents RL_DbgPath As System.Windows.Forms.Label
-    Friend WithEvents RL_Introduction As System.Windows.Forms.Label
+    Friend WithEvents LL_Introduction As System.Windows.Forms.LinkLabel
     Friend WithEvents RL_DownloadIntroduction As System.Windows.Forms.Label
     Friend WithEvents FSW_SymbolPath As IO.FileSystemWatcher
     Friend WithEvents RTB_PDBDownloadStatus As System.Windows.Forms.TextBox

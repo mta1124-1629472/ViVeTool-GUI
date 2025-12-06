@@ -35,9 +35,9 @@ Partial Class SetManual
         '
         'RTB_FeatureID
         '
-        Me.RTB_FeatureID.Location = New System.Drawing.Point(15, 15)
+        Me.RTB_FeatureID.Location = New System.Drawing.Point(15, 17)
         Me.RTB_FeatureID.Name = "RTB_FeatureID"
-        Me.RTB_FeatureID.Size = New System.Drawing.Size(237, 22)
+        Me.RTB_FeatureID.Size = New System.Drawing.Size(250, 22)
         Me.RTB_FeatureID.TabIndex = 0
         '
         'RDDB_PerformAction
@@ -45,9 +45,10 @@ Partial Class SetManual
         Me.RDDB_PerformAction.Enabled = False
         Me.RDDB_PerformAction.Image = Global.ViVeTool_GUI.My.Resources.Resources.icons8_start_24
         Me.RDDB_PerformAction.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-        Me.RDDB_PerformAction.Location = New System.Drawing.Point(258, 12)
+        Me.RDDB_PerformAction.Location = New System.Drawing.Point(275, 12)
         Me.RDDB_PerformAction.Name = "RDDB_PerformAction"
-        Me.RDDB_PerformAction.Size = New System.Drawing.Size(154, 28)
+        Me.RDDB_PerformAction.Padding = New System.Windows.Forms.Padding(4)
+        Me.RDDB_PerformAction.Size = New System.Drawing.Size(175, 35)
         Me.RDDB_PerformAction.TabIndex = 1
         Me.RDDB_PerformAction.Text = "Perform Action ▼"
         Me.RDDB_PerformAction.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText
@@ -85,7 +86,7 @@ Partial Class SetManual
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(427, 58)
+        Me.ClientSize = New System.Drawing.Size(465, 60)
         Me.Controls.Add(Me.RDDB_PerformAction)
         Me.Controls.Add(Me.RTB_FeatureID)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle

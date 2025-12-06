@@ -472,6 +472,9 @@ Public Class ScannerUI
         AddHandler Application.ThreadException, AddressOf CrashReporter.ApplicationThreadException
         AddHandler AppDomain.CurrentDomain.UnhandledException, AddressOf CrashReporter.CurrentDomainOnUnhandledException
 
+        ' Set up TabControl for proper dark mode rendering (handles DrawItem and Paint events)
+        ThemeHelper.SetupTabControlForDarkMode(TabControl_Main)
+
         'Load About Labels
         Dim ApplicationTitle As String
         If My.Application.Info.Title <> "" Then
@@ -487,6 +490,34 @@ Public Class ScannerUI
         ' Initialize tooltips for text boxes
         _toolTip.SetToolTip(RTB_DbgPath, "Example Path: C:\Program Files\Windows Kits\10\Debuggers\x64\symchk.exe")
         _toolTip.SetToolTip(RTB_SymbolPath, "The downloaded Debug Symbols can be up to 5~8GB in size.")
+
+        ' Set up the Windows SDK link in the introduction text
+        Dim linkText As String = "Windows SDK"
+        Dim linkStart As Integer = LL_Introduction.Text.IndexOf(linkText)
+        If linkStart >= 0 Then
+            LL_Introduction.Links.Clear()
+            LL_Introduction.Links.Add(linkStart, linkText.Length, "https://go.microsoft.com/fwlink/?linkid=2342616")
+        End If
+
+        ' Apply saved theme settings
+        If My.Settings.UseSystemTheme Then
+            CB_UseSystemTheme.Checked = True
+            ThemeHelper.ApplySystemTheme(CB_ThemeToggle, My.Resources.icons8_moon_and_stars_24, My.Resources.icons8_sun_24)
+        ElseIf My.Settings.DarkMode Then
+            CB_ThemeToggle.Checked = True
+        End If
+
+        ' Apply the theme to the form
+        ThemeHelper.ApplyThemeToForm(Me, CB_ThemeToggle.Checked)
+    End Sub
+
+    ''' <summary>
+    ''' Opens the Windows SDK download page in the default browser
+    ''' </summary>
+    ''' <param name="sender">Default sender Object</param>
+    ''' <param name="e">LinkLabelLinkClicked EventArgs</param>
+    Private Sub LL_Introduction_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles LL_Introduction.LinkClicked
+        Process.Start(New ProcessStartInfo(e.Link.LinkData.ToString()) With {.UseShellExecute = True})
     End Sub
 
     ''' <summary>
@@ -500,6 +531,7 @@ Public Class ScannerUI
         Else
             ThemeHelper.ApplyLightTheme(CB_ThemeToggle, My.Resources.icons8_sun_24)
         End If
+        ThemeHelper.ApplyThemeToForm(Me, CB_ThemeToggle.Checked)
     End Sub
 
     ''' <summary>
@@ -510,6 +542,7 @@ Public Class ScannerUI
     Private Sub CB_UseSystemTheme_CheckedChanged(sender As Object, e As EventArgs) Handles CB_UseSystemTheme.CheckedChanged
         If CB_UseSystemTheme.Checked Then
             ThemeHelper.ApplySystemTheme(CB_ThemeToggle, My.Resources.icons8_moon_and_stars_24, My.Resources.icons8_sun_24)
+            ThemeHelper.ApplyThemeToForm(Me, CB_ThemeToggle.Checked)
         Else
             ThemeHelper.DisableSystemTheme()
         End If
