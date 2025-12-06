@@ -39,6 +39,23 @@ jobs:
 
       - name: Convert sarif for uploading to GitHub
         uses: security-code-scan/security-code-scan-results-action@cdb3d5e639054395e45bf401cba8688fcaf7a687
+        with:
+          sarif_directory: ${{ runner.temp }}/scs-sarif
+
+      - name: Merge sarif results into single file
+        shell: pwsh
+        run: |
+          $sarifDir = Join-Path $env:RUNNER_TEMP "scs-sarif"
+          if (!(Test-Path $sarifDir)) { throw "SARIF directory not found: $sarifDir" }
+
+          $sarifFiles = Get-ChildItem -Path $sarifDir -Filter *.sarif | Select-Object -ExpandProperty FullName
+          if (-not $sarifFiles) { throw "No SARIF files produced for upload." }
+
+          $output = Join-Path $sarifDir "merged.sarif"
+          & "$env:USERPROFILE/.dotnet/tools/sarif" merge $sarifFiles --output $output --merge-runs
 
       - name: Upload sarif
         uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ runner.temp }}/scs-sarif/merged.sarif
+          category: securitycodescan
