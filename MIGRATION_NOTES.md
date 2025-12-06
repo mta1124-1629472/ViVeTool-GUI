@@ -1,6 +1,6 @@
 # ViVeTool-GUI WPF Migration Notes
 
-This document describes the new WPF scaffold added to support migrating ViVeTool-GUI from WinForms to WPF on .NET 8.
+This document describes the new WPF scaffold added to support migrating ViVeTool-GUI from WinForms to WPF on .NET 9.
 
 ## Project Structure
 
@@ -11,7 +11,7 @@ The new WPF project is located in `ViVeTool-GUI.Wpf/` and follows the MVVM patte
 ```
 ViVeTool-GUI.Wpf/
 ├── App.xaml / App.xaml.vb         # Application entry point with theme initialization
-├── ViVeTool-GUI.Wpf.vbproj        # Project file (.NET 8, UseWPF)
+├── ViVeTool-GUI.Wpf.vbproj        # Project file (.NET 9, UseWPF)
 ├── Converters/
 │   └── InverseBooleanConverter.vb # Value converter for boolean inversion
 ├── Models/
@@ -22,7 +22,7 @@ ViVeTool-GUI.Wpf/
 ├── Services/
 │   ├── FeatureService.vb          # Feature management service (ViVe integration placeholder)
 │   ├── GitHubService.vb           # GitHub API service for feature lists
-│   └── ThemeService.vb            # Theme switching service
+│   └── ThemeService.vb            # Theme switching service (Light/Dark/System modes)
 ├── Themes/
 │   ├── Light.xaml                 # Light theme resource dictionary
 │   └── Dark.xaml                  # Dark theme resource dictionary
@@ -36,7 +36,7 @@ ViVeTool-GUI.Wpf/
 ## How to Build
 
 ### Prerequisites
-- .NET 8 SDK or later
+- .NET 9 SDK or later
 - Windows (for running the application) or EnableWindowsTargeting=true for cross-platform build
 
 ### Building the WPF Project
@@ -49,6 +49,29 @@ dotnet build
 
 Note: The existing WinForms projects target .NET Framework 4.8 and require Windows with the .NET Framework SDK to build.
 
+## .NET 9 Fluent Theme
+
+The WPF project uses the new .NET 9 Fluent theme for a modern Windows 11-style appearance.
+
+### Features
+
+- **ThemeMode**: Supports `Light`, `Dark`, and `System` (follows OS setting) theme modes
+- **Fluent Theme Dictionary**: Uses `PresentationFramework.Fluent` for modern control styling
+- **Accent Colors**: UI elements use Windows system accent colors via `SystemColors.AccentColorBrushKey`
+- **Fallback to Aero2**: Can disable Fluent theme via `ThemeService.UseFluentTheme = False` to revert to classic Aero2 theme
+
+### ThemeMode Warning Suppression
+
+The project file includes `<NoWarn>$(NoWarn);WPF0001</NoWarn>` to suppress the experimental ThemeMode API warning. This is expected as ThemeMode is an official .NET 9 feature.
+
+### Theme Switching
+
+Users can cycle through themes (Light → Dark → System) using the theme toggle button in the toolbar. The `ThemeService` manages:
+
+1. Setting `Application.ThemeMode` for the Fluent theme system
+2. Updating app-specific resource dictionaries for custom colors
+3. Detecting system dark mode preference for "System" mode
+
 ## Architecture
 
 ### MVVM Pattern
@@ -58,14 +81,15 @@ Note: The existing WinForms projects target .NET Framework 4.8 and require Windo
 
 ### Theme System
 - Light and Dark themes are defined in `Themes/Light.xaml` and `Themes/Dark.xaml`
-- `ThemeService` manages theme switching at runtime
+- `ThemeService` manages theme switching at runtime with Light/Dark/System modes
+- The Fluent theme provides modern control styling with accent color support
 - Themes define colors, brushes, and styles for common controls (Window, Button, TextBox, ComboBox, DataGrid)
 
 ### Commands
 - `ApplyFeatureCommand`: Enables a selected feature
 - `RevertFeatureCommand`: Reverts a feature to default state
 - `RefreshBuildsCommand`: Fetches available Windows builds from GitHub (async)
-- `ToggleThemeCommand`: Switches between Light and Dark themes
+- `ToggleThemeCommand`: Cycles through Light/Dark/System themes
 - `LoadFeaturesCommand`: Loads feature list (async)
 
 ## Next Steps for Migration
@@ -111,5 +135,5 @@ dotnet publish -c Release -r win-x64
 
 - The existing WinForms project remains untouched and functional
 - Both projects can coexist in the solution
-- The WPF project uses .NET 8 while the WinForms project uses .NET Framework 4.8
+- The WPF project uses .NET 9 with the new Fluent theme and ThemeMode support
 - No Telerik dependencies are used in the WPF project

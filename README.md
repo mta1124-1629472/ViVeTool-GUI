@@ -44,7 +44,7 @@ Apart from being able to manage features, ViVeTool GUI let´s you also:
 - Sort Features by Feature Name, Feature ID or Feature State
 - Group Features by: Always Enabled, Always Disabled, Enabled by Default, Disabled by Default and Modifiable
 - Copy Feature Names and IDs by right-clicking them
-- Switch between Dark and Light Mode (Setting get´s saved and applied on Start)
+- Switch between Dark, Light and System Mode (WPF version supports Windows 11 Fluent theme with accent colors)
 - Automatically load the latest Feature List when starting ViVeTool GUI
 - Scan a Windows Build for Hidden Features to create your own Feature List
 - Use ViVeTool GUI in multiple translated Languages
@@ -56,7 +56,15 @@ Apart from being able to manage features, ViVeTool GUI let´s you also:
 ## What are the System Requirements?
 Since ViVeTool GUI uses the ViVe API, Windows 10 Build 18963 (Version 2004) and newer is the only OS Requirement.
 
-Apart from that, the only Requirement is .Net Framework 4.8
+Apart from that, the only Requirement is .Net Framework 4.8 (WinForms version) or .NET 9 (WPF version).
+
+### WPF Version (.NET 9)
+The new WPF version features:
+- Modern Windows 11 Fluent theme with light/dark/system mode support
+- Windows accent color integration
+- ThemeMode experimental API (warning WPF0001 is suppressed in the project)
+
+See [MIGRATION_NOTES.md](MIGRATION_NOTES.md) for more details on the WPF version.
 
 ## Why not just use ViVeTool?
 Using ViVeTool GUI is more easier and user-friendly, besides it lets you also search for features and enable them with a few clicks.

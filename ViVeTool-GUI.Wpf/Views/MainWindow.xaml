@@ -65,7 +65,7 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Content="{Binding CurrentThemeName}" 
                             Command="{Binding ToggleThemeCommand}"
-                            ToolTip="Toggle Light/Dark Theme"
+                            ToolTip="Cycle Theme: Light → Dark → System"
                             MinWidth="80" />
                 </StackPanel>
             </Grid>
@@ -111,10 +111,21 @@
                     Padding="15">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
+                        <!-- Accent Color Sample Section using System AccentColor brushes -->
+                        <Border Background="{DynamicResource {x:Static SystemColors.AccentColorBrushKey}}"
+                                CornerRadius="4"
+                                Padding="10"
+                                Margin="0,0,0,15">
+                            <TextBlock Text="System Accent Color"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center" />
+                        </Border>
+
                         <TextBlock Text="Feature Details" 
                                    FontSize="16" 
                                    FontWeight="SemiBold"
-                                   Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                   Foreground="{DynamicResource {x:Static SystemColors.AccentColorBrushKey}}"
                                    Margin="0,0,0,15" />
 
                         <!-- Feature ID -->
@@ -178,9 +189,9 @@
             </Border>
         </Grid>
 
-        <!-- Status Bar -->
+        <!-- Status Bar - Using System Accent Color for modern look -->
         <Border Grid.Row="2" 
-                Background="{DynamicResource StatusBarBackgroundBrush}"
+                Background="{DynamicResource {x:Static SystemColors.AccentColorBrushKey}}"
                 Padding="10,6">
             <Grid>
                 <Grid.ColumnDefinitions>
