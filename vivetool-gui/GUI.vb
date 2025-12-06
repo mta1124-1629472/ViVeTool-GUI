@@ -893,16 +893,15 @@ Public Class GUI
     ''' <summary>
     ''' Basic Internet Connectivity Check by trying to check if github.com is accessible
     ''' </summary>
-    ''' <returns>True if http://www.github.com responds. False if not</returns>
+    ''' <returns>True if https://www.github.com responds. False if not</returns>
     Public Shared Function CheckForInternetConnection() As Boolean
         Try
             'Use a HEAD request instead of downloading content - more efficient
-            Dim request As HttpWebRequest = DirectCast(WebRequest.Create("http://www.github.com"), HttpWebRequest)
+            Dim request As HttpWebRequest = DirectCast(WebRequest.Create("https://www.github.com"), HttpWebRequest)
             request.Method = "HEAD"
             request.Timeout = 5000 'Set a reasonable timeout of 5 seconds
             Using response As HttpWebResponse = DirectCast(request.GetResponse(), HttpWebResponse)
                 Return response.StatusCode = HttpStatusCode.OK OrElse
-                       response.StatusCode = HttpStatusCode.Moved OrElse
                        response.StatusCode = HttpStatusCode.MovedPermanently
             End Using
         Catch

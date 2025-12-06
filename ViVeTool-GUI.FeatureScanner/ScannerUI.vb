@@ -480,11 +480,14 @@ Public Class ScannerUI
                     Dim fileInfo = New IO.FileInfo(file)
                     totalSize += fileInfo.Length
                 Catch ex As Exception
-                    'Skip files that can't be accessed
+                    'Skip files that can't be accessed (e.g., permission denied, file in use)
+                    'This is expected behavior for system/protected files during directory scanning
+                    Diagnostics.Debug.WriteLine("Skipped file during size calculation: " & file & " - " & ex.Message)
                 End Try
             Next
         Catch ex As Exception
             'Handle access denied or other directory enumeration errors
+            Diagnostics.Debug.WriteLine("Error enumerating directory: " & RootFolder & " - " & ex.Message)
         End Try
         Return totalSize
     End Function
