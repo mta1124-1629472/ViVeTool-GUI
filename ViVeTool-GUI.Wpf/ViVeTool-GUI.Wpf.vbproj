@@ -48,4 +48,21 @@
     <Page Remove="App.xaml" />
   </ItemGroup>
 
+  <!-- Copy ViVeTool_GUI.FeatureScanner.exe to the output directory if it exists -->
+  <Target Name="CopyFeatureScanner" AfterTargets="Build">
+    <PropertyGroup>
+      <!-- Try to find the FeatureScanner in the sibling project's output -->
+      <FeatureScannerPath Condition="Exists('..\ViVeTool-GUI.FeatureScanner\bin\$(Configuration)\ViVeTool_GUI.FeatureScanner.exe')">..\ViVeTool-GUI.FeatureScanner\bin\$(Configuration)\ViVeTool_GUI.FeatureScanner.exe</FeatureScannerPath>
+      <FeatureScannerPath Condition="'$(FeatureScannerPath)' == '' And Exists('..\ViVeTool-GUI.FeatureScanner\bin\x64\$(Configuration)\ViVeTool_GUI.FeatureScanner.exe')">..\ViVeTool-GUI.FeatureScanner\bin\x64\$(Configuration)\ViVeTool_GUI.FeatureScanner.exe</FeatureScannerPath>
+      <FeatureScannerPath Condition="'$(FeatureScannerPath)' == '' And Exists('..\ViVeTool-GUI.FeatureScanner\bin\Debug\ViVeTool_GUI.FeatureScanner.exe')">..\ViVeTool-GUI.FeatureScanner\bin\Debug\ViVeTool_GUI.FeatureScanner.exe</FeatureScannerPath>
+      <FeatureScannerPath Condition="'$(FeatureScannerPath)' == '' And Exists('..\ViVeTool-GUI.FeatureScanner\bin\Release\ViVeTool_GUI.FeatureScanner.exe')">..\ViVeTool-GUI.FeatureScanner\bin\Release\ViVeTool_GUI.FeatureScanner.exe</FeatureScannerPath>
+    </PropertyGroup>
+    <Copy SourceFiles="$(FeatureScannerPath)"
+          DestinationFolder="$(OutputPath)"
+          Condition="'$(FeatureScannerPath)' != ''"
+          SkipUnchangedFiles="true" />
+    <Warning Text="ViVeTool_GUI.FeatureScanner.exe not found. Launch Feature Scanner button may not work until the FeatureScanner project is built."
+             Condition="'$(FeatureScannerPath)' == ''" />
+  </Target>
+
 </Project>

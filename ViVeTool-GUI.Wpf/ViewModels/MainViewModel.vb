@@ -532,7 +532,19 @@ Namespace ViewModels
                     Features.Add(feature)
                 Next
 
-                StatusMessage = $"Loaded {Features.Count} features."
+                ' Check if the service returned an error row (feature ID 0 with "Error loading features" name)
+                Dim hasError = loadedFeatures.Any(Function(f) f.Id = 0 AndAlso f.Name = "Error loading features")
+                If hasError Then
+                    ' Display the precise error message from the service
+                    Dim errorMessage = _featureService.LastErrorMessage
+                    If Not String.IsNullOrWhiteSpace(errorMessage) Then
+                        StatusMessage = $"Error loading features: {errorMessage}"
+                    Else
+                        StatusMessage = "Error loading features. Check Notes for details."
+                    End If
+                Else
+                    StatusMessage = $"Loaded {Features.Count} features."
+                End If
             Catch ex As Exception
                 StatusMessage = $"Error loading features: {ex.Message}"
             Finally

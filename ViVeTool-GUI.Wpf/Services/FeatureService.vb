@@ -114,6 +114,7 @@ Namespace Services
             Catch ex As Exception
                 ' If querying fails (e.g., on non-Windows or permission issues),
                 ' return an empty collection with an error indicator
+                _lastErrorMessage = ex.Message
                 result.Add(New FeatureItem(
                     0,
                     "Error loading features",
