@@ -160,8 +160,9 @@ Namespace Services
                         Return parsed
                     End If
                 End If
-            Catch
+            Catch ex As Exception
                 ' JSON not available, try CSV
+                System.Diagnostics.Debug.WriteLine($"JSON format not available for build {buildNumber}: {ex.Message}")
             End Try
 
             ' Try CSV format
@@ -176,8 +177,9 @@ Namespace Services
                         Return entries
                     End If
                 End If
-            Catch
+            Catch ex As Exception
                 ' CSV not available, try legacy format
+                System.Diagnostics.Debug.WriteLine($"CSV format not available for build {buildNumber}: {ex.Message}")
             End Try
 
             ' Fall back to legacy mach2 TXT format for backwards compatibility
@@ -244,7 +246,9 @@ Namespace Services
                 Dim doc = JsonDocument.Parse(response)
                 Dim tagName = doc.RootElement.GetProperty("tag_name").GetString()
                 Return tagName
-            Catch
+            Catch ex As Exception
+                ' Ignore errors during update check
+                System.Diagnostics.Debug.WriteLine($"Update check failed: {ex.Message}")
                 Return Nothing
             End Try
         End Function
@@ -345,8 +349,9 @@ Namespace Services
                         Dim id = Integer.Parse(parts(idIndex).Trim())
                         Dim group = If(groupIndex >= 0 AndAlso parts.Length > groupIndex, parts(groupIndex).Trim(), String.Empty)
                         entries.Add(New FeatureEntry(name, id, group))
-                    Catch
+                    Catch ex As FormatException
                         ' Skip malformed lines
+                        System.Diagnostics.Debug.WriteLine($"Skipping malformed CSV line: {ex.Message}")
                     End Try
                 End If
             Next
@@ -417,8 +422,9 @@ Namespace Services
                 Try
                     Dim content = File.ReadAllText(cacheFile)
                     Return JsonSerializer.Deserialize(Of LatestFeedInfo)(content)
-                Catch
+                Catch ex As Exception
                     ' Cache file corrupted, return Nothing
+                    System.Diagnostics.Debug.WriteLine($"Failed to load cached latest feed info: {ex.Message}")
                 End Try
             End If
             Return Nothing
@@ -436,7 +442,9 @@ Namespace Services
                     If _etagCache Is Nothing Then
                         _etagCache = New Dictionary(Of String, String)()
                     End If
-                Catch
+                Catch ex As Exception
+                    ' ETag cache corrupted, reinitialize
+                    System.Diagnostics.Debug.WriteLine($"Failed to load ETag cache: {ex.Message}")
                     _etagCache = New Dictionary(Of String, String)()
                 End Try
             End If
@@ -450,8 +458,9 @@ Namespace Services
             Try
                 Dim content = JsonSerializer.Serialize(_etagCache)
                 File.WriteAllText(cacheFile, content)
-            Catch
+            Catch ex As Exception
                 ' Ignore cache save errors
+                System.Diagnostics.Debug.WriteLine($"Failed to save ETag cache: {ex.Message}")
             End Try
         End Sub
 

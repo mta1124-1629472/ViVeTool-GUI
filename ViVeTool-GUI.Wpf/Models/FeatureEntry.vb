@@ -21,33 +21,44 @@ Imports System.Text.Json.Serialization
 
 Namespace Models
     ''' <summary>
-    ''' Represents the latest.json feed metadata.
-    ''' Tracks current/latest build and available builds in the feed.
+    ''' Represents a single feature entry from the per-build feature file.
+    ''' Supports both CSV and JSON formats with graceful handling of missing columns.
     ''' </summary>
-    Public Class LatestFeedInfo
+    Public Class FeatureEntry
         ''' <summary>
-        ''' The most recent/latest build number available in the feed.
+        ''' The feature name/symbol.
         ''' </summary>
-        <JsonPropertyName("latestBuild")>
-        Public Property LatestBuild As String
+        <JsonPropertyName("name")>
+        Public Property Name As String
 
         ''' <summary>
-        ''' List of all available build numbers in the feed.
+        ''' The feature ID.
         ''' </summary>
-        <JsonPropertyName("builds")>
-        Public Property Builds As List(Of String)
+        <JsonPropertyName("id")>
+        Public Property Id As Integer
 
         ''' <summary>
-        ''' Timestamp when the feed was last updated (ISO 8601 format).
+        ''' The feature group/stage (e.g., "Modifiable", "Always Enabled").
+        ''' May be empty for older builds that don't have this information.
         ''' </summary>
-        <JsonPropertyName("lastUpdated")>
-        Public Property LastUpdated As String
+        <JsonPropertyName("group")>
+        Public Property Group As String
 
         ''' <summary>
-        ''' Creates a new instance of LatestFeedInfo.
+        ''' Creates a new instance of FeatureEntry.
         ''' </summary>
         Public Sub New()
-            Builds = New List(Of String)()
+            Name = String.Empty
+            Group = String.Empty
+        End Sub
+
+        ''' <summary>
+        ''' Creates a new instance of FeatureEntry with specified values.
+        ''' </summary>
+        Public Sub New(name As String, id As Integer, Optional group As String = "")
+            Me.Name = If(name, String.Empty)
+            Me.Id = id
+            Me.Group = If(group, String.Empty)
         End Sub
     End Class
 End Namespace
