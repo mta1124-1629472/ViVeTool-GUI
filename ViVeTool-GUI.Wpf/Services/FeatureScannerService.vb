@@ -20,6 +20,7 @@ Option Strict On
 Imports System.Diagnostics
 Imports System.IO
 Imports System.Text
+Imports System.Threading
 Imports ViVeTool_GUI.Wpf.Models
 
 Namespace Services
@@ -33,6 +34,19 @@ Namespace Services
         Private Const Mach2Executable As String = "mach2.exe"
         Private Const Msdia140Dll As String = "msdia140.dll"
         Private Const SymchkExecutable As String = "symchk.exe"
+
+        ''' <summary>
+        ''' File extensions to skip during scanning (noisy/non-symbol files).
+        ''' These files do not contain symbol information and should be excluded
+        ''' to improve scan performance.
+        ''' </summary>
+        Private Shared ReadOnly NoisyFileExtensions As HashSet(Of String) = New HashSet(Of String)(StringComparer.OrdinalIgnoreCase) From {
+            ".log", ".log1", ".log2", ".etl", ".dat", ".hve", ".tmp",
+            ".txt", ".xml", ".json", ".ini", ".config", ".manifest",
+            ".nls", ".mum", ".cat", ".msi", ".msp", ".cab", ".ttf", ".ttc",
+            ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico",
+            ".html", ".htm", ".css", ".js"
+        }
 
         Private _currentProcess As Process
         Private _disposed As Boolean = False
@@ -112,24 +126,26 @@ Namespace Services
 
         ''' <summary>
         ''' Downloads PDB files using symchk.exe.
+        ''' Default fast scanning scans only C:\Windows and skips noisy file types.
         ''' </summary>
         ''' <param name="debuggerPath">Path to symchk.exe.</param>
         ''' <param name="symbolPath">Path to store downloaded symbols.</param>
         ''' <param name="cancellationToken">Cancellation token to stop the operation.</param>
         ''' <returns>True if successful, false otherwise.</returns>
-        Public Async Function DownloadSymbolsAsync(debuggerPath As String, symbolPath As String, cancellationToken As Threading.CancellationToken) As Task(Of ScannerResult)
+        Public Async Function DownloadSymbolsAsync(debuggerPath As String, symbolPath As String, cancellationToken As CancellationToken) As Task(Of ScannerResult)
             _cancellationRequested = False
 
-            ' Use environment variables for system paths (portability across Windows configurations)
+            ' Default fast scanning: Only scan C:\Windows (skip Program Files directories for performance)
             Dim systemRoot = Environment.GetFolderPath(Environment.SpecialFolder.Windows)
-            Dim programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)
-            Dim programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
 
-            ' Build list of directories to scan (filter out empty paths)
+            ' Build list of directories to scan (only Windows root for fast scanning)
             Dim directories = New List(Of String)()
             If Not String.IsNullOrEmpty(systemRoot) Then directories.Add(systemRoot)
-            If Not String.IsNullOrEmpty(programFiles) Then directories.Add(programFiles)
-            If Not String.IsNullOrEmpty(programFilesX86) AndAlso programFilesX86 <> programFiles Then directories.Add(programFilesX86)
+
+            If directories.Count = 0 Then
+                Return ScannerResult.CreateFailure("Unable to determine Windows directory path.")
+            End If
+
             Dim totalDirectories = directories.Count
             Dim currentIndex = 0
 
@@ -142,13 +158,28 @@ Namespace Services
                 Dim progress = CInt((currentIndex / CDbl(totalDirectories)) * 50) ' First 50% is download
                 RaiseEvent ProgressChanged(Me, New ScanProgressEventArgs(progress, $"Downloading symbols from {directory}..."))
 
-                ' Build the command arguments using Microsoft symbol server
-                Dim arguments = $"/r ""{directory}"" /s srv*""{symbolPath}""*https://msdl.microsoft.com/download/symbols /oc ""{symbolPath}"" /cn"
-                
-                ' Log the exact symchk command being executed (verbose output like WinForms version)
-                RaiseEvent OutputReceived(Me, $"Executing: {debuggerPath} {arguments}")
-
+                ' Create a temporary file list with filtered files (skip noisy extensions)
+                Dim filteredFilesPath = Path.Combine(Path.GetTempPath(), $"symchk_files_{Guid.NewGuid():N}.txt")
                 Try
+                    Await WriteFilteredFileListAsync(directory, filteredFilesPath, cancellationToken)
+
+                    If cancellationToken.IsCancellationRequested OrElse _cancellationRequested Then
+                        Return ScannerResult.CreateCancelled()
+                    End If
+
+                    ' Check if the filtered file list has any files
+                    If Not File.Exists(filteredFilesPath) OrElse New FileInfo(filteredFilesPath).Length = 0 Then
+                        RaiseEvent OutputReceived(Me, $"No scannable files found in {directory} after filtering noisy extensions.")
+                        Continue For
+                    End If
+
+                    ' Build the command arguments using Microsoft symbol server with file list
+                    ' The /if flag reads files from the specified input file
+                    Dim arguments = $"/if ""{filteredFilesPath}"" /s srv*""{symbolPath}""*https://msdl.microsoft.com/download/symbols /oc ""{symbolPath}"" /cn"
+
+                    ' Log the exact symchk command being executed (verbose output like WinForms version)
+                    RaiseEvent OutputReceived(Me, $"Executing: {debuggerPath} {arguments}")
+
                     Dim result = Await RunProcessAsync(debuggerPath, arguments, AppDomain.CurrentDomain.BaseDirectory, cancellationToken)
                     If Not result.Success AndAlso Not cancellationToken.IsCancellationRequested Then
                         RaiseEvent OutputReceived(Me, $"Warning: Error downloading symbols from {directory}: {result.ErrorMessage}")
@@ -157,10 +188,94 @@ Namespace Services
                     Return ScannerResult.CreateCancelled()
                 Catch ex As Exception
                     RaiseEvent OutputReceived(Me, $"Warning: Exception downloading symbols from {directory}: {ex.Message}")
+                Finally
+                    ' Clean up the temporary file list
+                    Try
+                        If File.Exists(filteredFilesPath) Then
+                            File.Delete(filteredFilesPath)
+                        End If
+                    Catch
+                        ' Ignore cleanup errors
+                    End Try
                 End Try
             Next
 
             Return ScannerResult.CreateSuccess(String.Empty)
+        End Function
+
+        ''' <summary>
+        ''' Writes a filtered list of files to scan, excluding noisy file extensions.
+        ''' </summary>
+        ''' <param name="directory">The directory to enumerate files from.</param>
+        ''' <param name="outputPath">The path to write the filtered file list.</param>
+        ''' <param name="cancellationToken">Cancellation token.</param>
+        Private Async Function WriteFilteredFileListAsync(directory As String, outputPath As String, cancellationToken As CancellationToken) As Task
+            Await Task.Run(
+                Sub()
+                    Using writer As New StreamWriter(outputPath, False, Encoding.UTF8)
+                        Try
+                            ' Enumerate files recursively and filter by extension
+                            For Each filePath In EnumerateFilesRecursive(directory)
+                                If cancellationToken.IsCancellationRequested OrElse _cancellationRequested Then
+                                    Exit For
+                                End If
+
+                                Dim extension = Path.GetExtension(filePath)
+                                If Not NoisyFileExtensions.Contains(extension) Then
+                                    writer.WriteLine(filePath)
+                                End If
+                            Next
+                        Catch ex As Exception
+                            ' Log enumeration errors but don't fail the entire operation
+                            Debug.WriteLine($"Error enumerating files in {directory}: {ex.Message}")
+                        End Try
+                    End Using
+                End Sub, cancellationToken)
+        End Function
+
+        ''' <summary>
+        ''' Recursively enumerates files in a directory, handling access denied errors gracefully.
+        ''' </summary>
+        ''' <param name="directory">The directory to enumerate.</param>
+        ''' <returns>An enumerable of file paths.</returns>
+        Private Iterator Function EnumerateFilesRecursive(directory As String) As IEnumerable(Of String)
+            ' First, yield files in the current directory
+            Dim files As IEnumerable(Of String) = Nothing
+            Try
+                files = IO.Directory.EnumerateFiles(directory)
+            Catch ex As UnauthorizedAccessException
+                ' Skip directories we can't access
+            Catch ex As DirectoryNotFoundException
+                ' Skip directories that don't exist
+            Catch ex As IOException
+                ' Skip directories with I/O errors
+            End Try
+
+            If files IsNot Nothing Then
+                For Each file In files
+                    Yield file
+                Next
+            End If
+
+            ' Then recursively enumerate subdirectories
+            Dim subdirectories As IEnumerable(Of String) = Nothing
+            Try
+                subdirectories = IO.Directory.EnumerateDirectories(directory)
+            Catch ex As UnauthorizedAccessException
+                ' Skip directories we can't access
+            Catch ex As DirectoryNotFoundException
+                ' Skip directories that don't exist
+            Catch ex As IOException
+                ' Skip directories with I/O errors
+            End Try
+
+            If subdirectories IsNot Nothing Then
+                For Each subdir In subdirectories
+                    For Each file In EnumerateFilesRecursive(subdir)
+                        Yield file
+                    Next
+                Next
+            End If
         End Function
 
         ''' <summary>
