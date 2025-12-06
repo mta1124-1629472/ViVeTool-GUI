@@ -241,11 +241,9 @@ Public Class GUI
                            RDDL_Build.Items.Add(item)
                        Next
 
-                       'Deselect any Item
+                       'Deselect any Item - with SelectedIndex = -1, the ComboBox shows empty
                        RDDL_Build.SelectedIndex = -1
 
-                       'Set default Text - using SelectedIndex = -1 and handling in the combo box
-                       
                        'Add the Handler
                        AddHandler RDDL_Build.SelectedIndexChanged, AddressOf PopulateDataGridView
                    End Sub)
