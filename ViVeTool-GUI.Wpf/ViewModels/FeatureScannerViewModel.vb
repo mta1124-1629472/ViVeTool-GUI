@@ -291,6 +291,30 @@ Namespace ViewModels
 
             ' Auto-detect debugger path
             AutoDetectDebuggerPath()
+
+            ' Initialize default symbol path to C:\Symbols if empty
+            InitializeDefaultSymbolPath()
+        End Sub
+
+        ''' <summary>
+        ''' Initializes the default symbol path to C:\Symbols if empty.
+        ''' Attempts to create the folder safely without crashing on failure.
+        ''' </summary>
+        Private Sub InitializeDefaultSymbolPath()
+            If String.IsNullOrWhiteSpace(SymbolPath) Then
+                Const DefaultSymbolPath As String = "C:\Symbols"
+                SymbolPath = DefaultSymbolPath
+
+                ' Attempt to create the folder safely - no crash on failure
+                Try
+                    If Not System.IO.Directory.Exists(DefaultSymbolPath) Then
+                        System.IO.Directory.CreateDirectory(DefaultSymbolPath)
+                    End If
+                Catch
+                    ' Ignore errors when creating the default symbol path folder
+                    ' The user can still browse to a different location
+                End Try
+            End If
         End Sub
 
         ''' <summary>

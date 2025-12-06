@@ -58,71 +58,154 @@ Namespace Services
             Return Await Task.Run(Function() GetFeaturesCore())
         End Function
 
+        ' Maximum allowed group value according to Windows RTL Feature Manager
+        Private Const MaxGroupValue As Integer = 14
+
+        ''' <summary>
+        ''' List of warning messages from the last operation.
+        ''' </summary>
+        Private _warnings As New List(Of String)()
+
+        ''' <summary>
+        ''' Gets the warning messages from the last operation.
+        ''' </summary>
+        Public ReadOnly Property Warnings As List(Of String)
+            Get
+                Return _warnings
+            End Get
+        End Property
+
         ''' <summary>
         ''' Core method to query all feature configurations from the system.
+        ''' Implements defensive handling to continue loading even if some features fail.
         ''' </summary>
         Private Function GetFeaturesCore() As ObservableCollection(Of FeatureItem)
             Dim result As New ObservableCollection(Of FeatureItem)()
+            _warnings.Clear()
 
+            ' Create a dictionary to merge configurations by FeatureId
+            Dim featureDict As New Dictionary(Of UInteger, FeatureItem)()
+            Dim runtimeConfigs As IEnumerable(Of FeatureConfiguration) = Nothing
+            Dim bootConfigs As IEnumerable(Of FeatureConfiguration) = Nothing
+
+            ' Query runtime configurations with defensive handling
             Try
-                ' Query all feature configurations from both Runtime and Boot sections
-                Dim runtimeConfigs = RtlFeatureManager.QueryAllFeatureConfigurations(FeatureConfigurationSection.Runtime)
-                Dim bootConfigs = RtlFeatureManager.QueryAllFeatureConfigurations(FeatureConfigurationSection.Boot)
+                runtimeConfigs = RtlFeatureManager.QueryAllFeatureConfigurations(FeatureConfigurationSection.Runtime)
+            Catch ex As Exception
+                ' Log warning but continue - we may still get boot configs
+                Dim warning = $"Warning: Could not query runtime features: {ex.Message}"
+                _warnings.Add(warning)
+                System.Diagnostics.Debug.WriteLine(warning)
+            End Try
 
-                ' Create a dictionary to merge configurations by FeatureId
-                Dim featureDict As New Dictionary(Of UInteger, FeatureItem)()
+            ' Query boot configurations with defensive handling
+            Try
+                bootConfigs = RtlFeatureManager.QueryAllFeatureConfigurations(FeatureConfigurationSection.Boot)
+            Catch ex As Exception
+                ' Log warning but continue - we may still have runtime configs
+                Dim warning = $"Warning: Could not query boot features: {ex.Message}"
+                _warnings.Add(warning)
+                System.Diagnostics.Debug.WriteLine(warning)
+            End Try
 
-                ' Process runtime configurations first
-                If runtimeConfigs IsNot Nothing Then
-                    For Each config In runtimeConfigs
+            ' Process runtime configurations first with per-item error handling
+            If runtimeConfigs IsNot Nothing Then
+                For Each config In runtimeConfigs
+                    Try
+                        ' Validate and clamp group value if needed
+                        Dim groupValue = config.Group
+                        Dim groupWarning As String = Nothing
+                        If groupValue > MaxGroupValue Then
+                            groupWarning = $"Group value {groupValue} clamped to {MaxGroupValue}"
+                            groupValue = MaxGroupValue
+                        End If
+
                         Dim stateStr As String = config.EnabledState.ToString()
                         Dim isEnabled As Boolean = (config.EnabledState = FeatureEnabledState.Enabled)
+                        Dim notes = $"Group: {config.Group}, Variant: {config.Variant}"
+                        If groupWarning IsNot Nothing Then
+                            notes = notes & $" ({groupWarning})"
+                        End If
+
                         Dim featureItem As New FeatureItem(
                             CInt(config.FeatureId),
                             $"Feature {config.FeatureId}",
                             stateStr,
                             isEnabled,
-                            $"Group: {config.Group}, Variant: {config.Variant}"
+                            notes
                         )
                         featureDict(config.FeatureId) = featureItem
-                    Next
-                End If
+                    Catch ex As Exception
+                        ' Skip individual problematic features and log warning
+                        Dim warning = $"Warning: Skipped feature {config.FeatureId}: {ex.Message}"
+                        _warnings.Add(warning)
+                        System.Diagnostics.Debug.WriteLine(warning)
+                    End Try
+                Next
+            End If
 
-                ' Process boot configurations (may override or add to runtime)
-                If bootConfigs IsNot Nothing Then
-                    For Each config In bootConfigs
+            ' Process boot configurations (may override or add to runtime) with per-item error handling
+            If bootConfigs IsNot Nothing Then
+                For Each config In bootConfigs
+                    Try
                         If Not featureDict.ContainsKey(config.FeatureId) Then
+                            ' Validate and clamp group value if needed
+                            Dim groupValue = config.Group
+                            Dim groupWarning As String = Nothing
+                            If groupValue > MaxGroupValue Then
+                                groupWarning = $"Group value {groupValue} clamped to {MaxGroupValue}"
+                                groupValue = MaxGroupValue
+                            End If
+
                             Dim stateStr As String = config.EnabledState.ToString()
                             Dim isEnabled As Boolean = (config.EnabledState = FeatureEnabledState.Enabled)
+                            Dim notes = $"Group: {config.Group}, Variant: {config.Variant} (Boot)"
+                            If groupWarning IsNot Nothing Then
+                                notes = notes & $" ({groupWarning})"
+                            End If
+
                             Dim featureItem As New FeatureItem(
                                 CInt(config.FeatureId),
                                 $"Feature {config.FeatureId}",
                                 stateStr,
                                 isEnabled,
-                                $"Group: {config.Group}, Variant: {config.Variant} (Boot)"
+                                notes
                             )
                             featureDict(config.FeatureId) = featureItem
                         End If
-                    Next
-                End If
-
-                ' Add all features to the result collection
-                For Each kvp In featureDict.OrderBy(Function(x) x.Key)
-                    result.Add(kvp.Value)
+                    Catch ex As Exception
+                        ' Skip individual problematic features and log warning
+                        Dim warning = $"Warning: Skipped boot feature {config.FeatureId}: {ex.Message}"
+                        _warnings.Add(warning)
+                        System.Diagnostics.Debug.WriteLine(warning)
+                    End Try
                 Next
+            End If
 
-            Catch ex As Exception
-                ' If querying fails (e.g., on non-Windows or permission issues),
-                ' return an empty collection with an error indicator
-                _lastErrorMessage = ex.Message
+            ' Add all successfully loaded features to the result collection
+            For Each kvp In featureDict.OrderBy(Function(x) x.Key)
+                result.Add(kvp.Value)
+            Next
+
+            ' If we have warnings but also loaded some features, don't add an error row
+            ' Just store the combined warning message for display
+            If _warnings.Count > 0 Then
+                _lastErrorMessage = String.Join("; ", _warnings)
+            Else
+                _lastErrorMessage = String.Empty
+            End If
+
+            ' If no features were loaded and we have warnings, add a warning indicator
+            ' (but not an error that blocks usage)
+            If result.Count = 0 AndAlso _warnings.Count > 0 Then
                 result.Add(New FeatureItem(
                     0,
-                    "Error loading features",
-                    "Error",
+                    "No features loaded",
+                    "Warning",
                     False,
-                    $"Failed to query features: {ex.Message}"
+                    $"Could not load features: {_lastErrorMessage}. You can still select a build and view feature lists."
                 ))
-            End Try
+            End If
 
             Return result
         End Function

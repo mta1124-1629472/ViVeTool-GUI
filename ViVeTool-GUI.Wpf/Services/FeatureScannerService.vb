@@ -142,8 +142,8 @@ Namespace Services
                 Dim progress = CInt((currentIndex / CDbl(totalDirectories)) * 50) ' First 50% is download
                 RaiseEvent ProgressChanged(Me, New ScanProgressEventArgs(progress, $"Downloading symbols from {directory}..."))
 
-                ' Build the command arguments
-                Dim arguments = $"/r ""{directory}"" /oc ""{symbolPath}"" /cn"
+                ' Build the command arguments using Microsoft symbol server
+                Dim arguments = $"/r ""{directory}"" /s srv*""{symbolPath}""*https://msdl.microsoft.com/download/symbols /oc ""{symbolPath}"" /cn"
                 
                 ' Log the exact symchk command being executed (verbose output like WinForms version)
                 RaiseEvent OutputReceived(Me, $"Executing: {debuggerPath} {arguments}")

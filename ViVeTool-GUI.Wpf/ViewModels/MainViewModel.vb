@@ -532,21 +532,26 @@ Namespace ViewModels
                     Features.Add(feature)
                 Next
 
-                ' Check if the service returned an error row (feature ID 0 with "Error loading features" name)
-                Dim hasError = loadedFeatures.Any(Function(f) f.Id = 0 AndAlso f.Name = "Error loading features")
-                If hasError Then
-                    ' Display the precise error message from the service
-                    Dim errorMessage = _featureService.LastErrorMessage
-                    If Not String.IsNullOrWhiteSpace(errorMessage) Then
-                        StatusMessage = $"Error loading features: {errorMessage}"
-                    Else
-                        StatusMessage = "Error loading features. Check Notes for details."
-                    End If
+                ' Check if the service returned a warning row (feature ID 0 with "No features loaded" name)
+                Dim hasNoFeatures = loadedFeatures.Any(Function(f) f.Id = 0 AndAlso f.Name = "No features loaded")
+                
+                ' Check for warnings from the service (non-blocking issues)
+                Dim warnings = _featureService.Warnings
+                Dim hasWarnings = warnings IsNot Nothing AndAlso warnings.Count > 0
+                
+                If hasNoFeatures Then
+                    ' Display warning message but allow build selection to continue
+                    StatusMessage = "Could not load system features. You can still select a build and view feature lists."
+                ElseIf hasWarnings Then
+                    ' Features loaded but with some warnings
+                    StatusMessage = $"Loaded {Features.Count} features with {warnings.Count} warning(s). Check console for details."
                 Else
                     StatusMessage = $"Loaded {Features.Count} features."
                 End If
             Catch ex As Exception
-                StatusMessage = $"Error loading features: {ex.Message}"
+                ' Even on exception, don't block the app - log and continue
+                StatusMessage = $"Warning: {ex.Message}. Build selection is still available."
+                System.Diagnostics.Debug.WriteLine($"Feature loading exception: {ex}")
             Finally
                 IsLoading = False
             End Try
