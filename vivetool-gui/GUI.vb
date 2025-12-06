@@ -125,7 +125,12 @@ Public Class GUI
     ''' </summary>
     Private Sub BackgroundTasks()
         'Check for Updates
-        AutoUpdater.Start("https://raw.githubusercontent.com/PeterStrick/ViVeTool-GUI/master/UpdaterXML.xml")
+        Try
+            AutoUpdater.Start("https://raw.githubusercontent.com/PeterStrick/ViVeTool-GUI/master/UpdaterXML.xml")
+        Catch ex As Exception
+            'Log the exception but continue with startup
+            Diagnostics.Debug.WriteLine("AutoUpdater.Start failed (" & ex.GetType().Name & "): " & ex.Message)
+        End Try
 
         'Populate the Build Combo Box, but first check if the PC is connected to the Internet, otherwise the GUI will crash without giving any helpful Information on WHY
         PopulateBuildComboBox_Check()
@@ -465,6 +470,7 @@ Public Class GUI
             Dim WebClient As New WebClient With {
                     .Encoding = System.Text.Encoding.UTF8
                 }
+            WebClient.Headers.Add("User-Agent", "PeterStrick/vivetool-gui")
             Dim path As String = IO.Path.GetTempPath & selectedBuild & ".txt"
             WebClient.DownloadFile("https://raw.githubusercontent.com/riverar/mach2/master/features/" & selectedBuild & ".txt", path)
 
