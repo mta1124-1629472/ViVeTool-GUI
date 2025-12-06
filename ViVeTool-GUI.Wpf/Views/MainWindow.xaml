@@ -49,7 +49,16 @@
                               IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}" />
                     <Button Content="Refresh" 
                             Margin="8,0,0,0"
-                            Command="{Binding RefreshBuildsCommand}" />
+                            Command="{Binding RefreshBuildsCommand}"
+                            ToolTip="Refresh available builds from feed" />
+                    <Button Content="Load Build" 
+                            Margin="8,0,0,0"
+                            Command="{Binding LoadBuildCommand}"
+                            ToolTip="Load features from selected build" />
+                    <Button Content="Load File..." 
+                            Margin="8,0,0,0"
+                            Command="{Binding LoadFromFileCommand}"
+                            ToolTip="Load features from a local file (txt/csv/json)" />
                 </StackPanel>
 
                 <!-- Center: Search -->

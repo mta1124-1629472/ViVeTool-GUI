@@ -398,6 +398,16 @@ Namespace ViewModels
         Public ReadOnly Property LoadFeaturesCommand As IAsyncRelayCommand
 
         ''' <summary>
+        ''' Command to load features from selected build.
+        ''' </summary>
+        Public ReadOnly Property LoadBuildCommand As IAsyncRelayCommand
+
+        ''' <summary>
+        ''' Command to load features from a local file.
+        ''' </summary>
+        Public ReadOnly Property LoadFromFileCommand As IRelayCommand
+
+        ''' <summary>
         ''' Command to launch the Feature Scanner application.
         ''' </summary>
         Public ReadOnly Property LaunchFeatureScannerCommand As IRelayCommand
@@ -431,6 +441,8 @@ Namespace ViewModels
             RefreshBuildsCommand = New AsyncRelayCommand(AddressOf ExecuteRefreshBuildsAsync, AddressOf CanExecuteRefreshBuilds)
             ToggleThemeCommand = New RelayCommand(AddressOf ExecuteToggleTheme)
             LoadFeaturesCommand = New AsyncRelayCommand(AddressOf ExecuteLoadFeaturesAsync)
+            LoadBuildCommand = New AsyncRelayCommand(AddressOf ExecuteLoadBuildAsync)
+            LoadFromFileCommand = New RelayCommand(AddressOf ExecuteLoadFromFile)
             LaunchFeatureScannerCommand = New RelayCommand(AddressOf ExecuteLaunchFeatureScanner, AddressOf CanExecuteLaunchFeatureScanner)
             PublishFeatureListCommand = New AsyncRelayCommand(AddressOf ExecutePublishFeatureListAsync, AddressOf CanExecutePublishFeatureList)
 
@@ -599,77 +611,207 @@ Namespace ViewModels
         End Sub
 
         ''' <summary>
-        ''' Loads features asynchronously.
-        ''' Handles group-related errors gracefully without blocking the app.
+        ''' Loads features asynchronously using feed-first approach with RTL overlay.
+        ''' Tries to load from latest build in feed, then overlays RTL state.
         ''' </summary>
         Private Async Function ExecuteLoadFeaturesAsync() As Task
             Try
                 IsLoading = True
                 LocalFeatureWarning = String.Empty
-                StatusMessage = "Loading features..."
+                StatusMessage = "Loading features from feed..."
 
-                Dim loadedFeatures = Await _featureService.GetFeaturesAsync()
+                ' Try feed-first approach - get latest build from feed
+                Dim feedInfo = Await _gitHubService.GetLatestFeedInfoAsync()
+                Dim loadedFeatures As ObservableCollection(Of FeatureItem) = Nothing
+
+                If feedInfo IsNot Nothing AndAlso Not String.IsNullOrWhiteSpace(feedInfo.LatestBuild) Then
+                    ' Load from feed with RTL overlay
+                    StatusMessage = $"Loading features from feed (build {feedInfo.LatestBuild})..."
+                    loadedFeatures = Await _featureService.GetFeaturesFromFeedAsync(feedInfo.LatestBuild, True)
+                Else
+                    ' Fallback to RTL-only if feed is unavailable
+                    LocalFeatureWarning = "Feed unavailable. Loading from local RTL only."
+                    StatusMessage = "Loading features from local RTL..."
+                    loadedFeatures = Await _featureService.GetFeaturesAsync()
+                End If
 
                 Features.Clear()
                 For Each feature In loadedFeatures
                     Features.Add(feature)
                 Next
 
-                ' Check if the service returned a warning row (feature ID 0 with placeholder name)
-                Dim hasNoFeatures = loadedFeatures.Any(Function(f) f.Id = 0 AndAlso f.Name = NoFeaturesLoadedText)
-                
-                ' Check for warnings from the service (non-blocking issues)
+                ' Check for warnings
                 Dim warnings = _featureService.Warnings
                 Dim hasWarnings = warnings IsNot Nothing AndAlso warnings.Count > 0
+                Dim hasNoFeatures = loadedFeatures.Any(Function(f) f.Id = 0 AndAlso f.Name = NoFeaturesLoadedText)
 
-                ' Consolidate warnings for display (avoid duplicate messages)
                 If hasWarnings Then
-                    ' Check for group-related errors using case-insensitive matching
                     Dim groupWarnings = warnings.Where(Function(w) w.IndexOf("Group", StringComparison.OrdinalIgnoreCase) >= 0 OrElse w.Contains(MaxGroupValueText)).ToList()
                     Dim otherWarnings = warnings.Where(Function(w) w.IndexOf("Group", StringComparison.OrdinalIgnoreCase) < 0 AndAlso Not w.Contains(MaxGroupValueText)).ToList()
 
                     If groupWarnings.Count > 0 Then
-                        ' Consolidate group warnings into a single message
-                        LocalFeatureWarning = $"Local feature query unavailable: Group value constraints exceeded (max {MaxGroupValueText}). You can still view feature lists from the feed."
+                        LocalFeatureWarning = $"RTL overlay issues: Group value constraints. Feature list from feed is available."
                     ElseIf otherWarnings.Count > 0 Then
-                        LocalFeatureWarning = $"Local feature query issues: {String.Join("; ", otherWarnings.Take(2))}"
+                        LocalFeatureWarning = $"RTL overlay issues: {String.Join("; ", otherWarnings.Take(2))}"
                     End If
                 End If
-                
+
                 If hasNoFeatures Then
-                    ' Set warning and continue - do not block
                     If String.IsNullOrEmpty(LocalFeatureWarning) Then
                         LocalFeatureWarning = _featureService.LastErrorMessage
                         If String.IsNullOrEmpty(LocalFeatureWarning) Then
-                            LocalFeatureWarning = "Could not load local system features."
+                            LocalFeatureWarning = "Could not load features from feed or RTL."
                         End If
                     End If
-                    StatusMessage = "Local features unavailable. You can still select a build and view feature lists."
+                    StatusMessage = "No features available. Try selecting a build manually or loading from file."
                 ElseIf hasWarnings Then
-                    ' Features loaded but with some warnings
-                    StatusMessage = $"Loaded {Features.Count} features with {warnings.Count} warning(s)."
+                    StatusMessage = $"Loaded {Features.Count} features from feed with {warnings.Count} RTL overlay warning(s)."
                 Else
-                    StatusMessage = $"Loaded {Features.Count} features."
+                    StatusMessage = $"Loaded {Features.Count} features from feed with RTL overlay."
                 End If
             Catch ex As Exception
-                ' Even on exception, don't block the app - log and continue
-                ' Check for group-related exceptions using case-insensitive matching
-                If ex.Message.IndexOf("Group", StringComparison.OrdinalIgnoreCase) >= 0 OrElse 
-                   ex.Message.Contains(MaxGroupValueText) Then
-                    LocalFeatureWarning = $"Local feature query unavailable: {ex.Message}"
-                Else
-                    LocalFeatureWarning = $"Local feature query failed: {ex.Message}"
-                End If
-                StatusMessage = "Local features unavailable. Build selection is still available."
-                System.Diagnostics.Debug.WriteLine($"Feature loading exception (non-fatal): {ex}")
+                LocalFeatureWarning = $"Feature loading failed: {ex.Message}"
+                StatusMessage = "Feature loading failed. Try selecting a build or loading from file."
+                System.Diagnostics.Debug.WriteLine($"Feature loading exception: {ex}")
             Finally
                 IsLoading = False
             End Try
         End Function
 
         ''' <summary>
+        ''' Loads features from the selected build with RTL overlay.
+        ''' </summary>
+        Private Async Function ExecuteLoadBuildAsync() As Task
+            Try
+                If String.IsNullOrWhiteSpace(SelectedBuild) Then
+                    StatusMessage = "Please select a build first."
+                    Return
+                End If
+
+                IsLoading = True
+                LocalFeatureWarning = String.Empty
+                StatusMessage = $"Loading features from build {SelectedBuild}..."
+
+                Dim loadedFeatures = Await _featureService.GetFeaturesFromFeedAsync(SelectedBuild, True)
+
+                Features.Clear()
+                For Each feature In loadedFeatures
+                    Features.Add(feature)
+                Next
+
+                ' Check for warnings
+                Dim warnings = _featureService.Warnings
+                Dim hasWarnings = warnings IsNot Nothing AndAlso warnings.Count > 0
+                Dim hasNoFeatures = loadedFeatures.Any(Function(f) f.Id = 0 AndAlso f.Name = NoFeaturesLoadedText)
+
+                If hasWarnings Then
+                    Dim groupWarnings = warnings.Where(Function(w) w.IndexOf("Group", StringComparison.OrdinalIgnoreCase) >= 0 OrElse w.Contains(MaxGroupValueText)).ToList()
+                    Dim otherWarnings = warnings.Where(Function(w) w.IndexOf("Group", StringComparison.OrdinalIgnoreCase) < 0 AndAlso Not w.Contains(MaxGroupValueText)).ToList()
+
+                    If groupWarnings.Count > 0 Then
+                        LocalFeatureWarning = $"RTL overlay issues: Group value constraints. Feature list from feed is available."
+                    ElseIf otherWarnings.Count > 0 Then
+                        LocalFeatureWarning = $"RTL overlay issues: {String.Join("; ", otherWarnings.Take(2))}"
+                    End If
+                End If
+
+                If hasNoFeatures Then
+                    If String.IsNullOrEmpty(LocalFeatureWarning) Then
+                        LocalFeatureWarning = _featureService.LastErrorMessage
+                    End If
+                    StatusMessage = $"No features found for build {SelectedBuild}."
+                ElseIf hasWarnings Then
+                    StatusMessage = $"Loaded {Features.Count} features from build {SelectedBuild} with {warnings.Count} RTL overlay warning(s)."
+                Else
+                    StatusMessage = $"Loaded {Features.Count} features from build {SelectedBuild} with RTL overlay."
+                End If
+            Catch ex As Exception
+                LocalFeatureWarning = $"Build loading failed: {ex.Message}"
+                StatusMessage = $"Failed to load build {SelectedBuild}."
+                System.Diagnostics.Debug.WriteLine($"Build loading exception: {ex}")
+            Finally
+                IsLoading = False
+            End Try
+        End Function
+
+        ''' <summary>
+        ''' Opens a file dialog and loads features from a local file.
+        ''' </summary>
+        Private Sub ExecuteLoadFromFile()
+            Try
+                ' Create and configure OpenFileDialog
+                Dim dialog As New Microsoft.Win32.OpenFileDialog() With {
+                    .Title = "Select Feature List File",
+                    .Filter = "Feature List Files (*.txt;*.csv;*.json)|*.txt;*.csv;*.json|Text Files (*.txt)|*.txt|CSV Files (*.csv)|*.csv|JSON Files (*.json)|*.json|All Files (*.*)|*.*",
+                    .FilterIndex = 1,
+                    .CheckFileExists = True
+                }
+
+                Dim result = dialog.ShowDialog()
+                If result = True Then
+                    ' Load the file asynchronously
+                    LoadFromFileAsync(dialog.FileName)
+                End If
+            Catch ex As Exception
+                StatusMessage = $"Error opening file dialog: {ex.Message}"
+                System.Diagnostics.Debug.WriteLine($"File dialog error: {ex}")
+            End Try
+        End Sub
+
+        ''' <summary>
+        ''' Loads features from a local file asynchronously.
+        ''' </summary>
+        Private Async Sub LoadFromFileAsync(filePath As String)
+            Try
+                IsLoading = True
+                LocalFeatureWarning = String.Empty
+                StatusMessage = $"Loading features from file: {System.IO.Path.GetFileName(filePath)}..."
+
+                Dim loadedFeatures = Await _featureService.GetFeaturesFromFileAsync(filePath, True)
+
+                Features.Clear()
+                For Each feature In loadedFeatures
+                    Features.Add(feature)
+                Next
+
+                ' Check for warnings
+                Dim warnings = _featureService.Warnings
+                Dim hasWarnings = warnings IsNot Nothing AndAlso warnings.Count > 0
+                Dim hasNoFeatures = loadedFeatures.Any(Function(f) f.Id = 0 AndAlso f.Name = NoFeaturesLoadedText)
+
+                If hasWarnings Then
+                    Dim groupWarnings = warnings.Where(Function(w) w.IndexOf("Group", StringComparison.OrdinalIgnoreCase) >= 0 OrElse w.Contains(MaxGroupValueText)).ToList()
+                    Dim otherWarnings = warnings.Where(Function(w) w.IndexOf("Group", StringComparison.OrdinalIgnoreCase) < 0 AndAlso Not w.Contains(MaxGroupValueText)).ToList()
+
+                    If groupWarnings.Count > 0 Then
+                        LocalFeatureWarning = $"RTL overlay issues: Group value constraints. Feature list from file is available."
+                    ElseIf otherWarnings.Count > 0 Then
+                        LocalFeatureWarning = $"RTL overlay issues: {String.Join("; ", otherWarnings.Take(2))}"
+                    End If
+                End If
+
+                If hasNoFeatures Then
+                    If String.IsNullOrEmpty(LocalFeatureWarning) Then
+                        LocalFeatureWarning = _featureService.LastErrorMessage
+                    End If
+                    StatusMessage = $"No features found in file."
+                ElseIf hasWarnings Then
+                    StatusMessage = $"Loaded {Features.Count} features from file with {warnings.Count} RTL overlay warning(s)."
+                Else
+                    StatusMessage = $"Loaded {Features.Count} features from file with RTL overlay."
+                End If
+            Catch ex As Exception
+                LocalFeatureWarning = $"File loading failed: {ex.Message}"
+                StatusMessage = $"Failed to load file."
+                System.Diagnostics.Debug.WriteLine($"File loading exception: {ex}")
+            Finally
+                IsLoading = False
+            End Try
+        End Sub
+
+        ''' <summary>
         ''' Initializes the view model and loads initial data.
-        ''' Decouples feed loading from local feature queries - both run independently.
+        ''' Uses feed-first approach for loading features.
         ''' </summary>
         Public Async Function InitializeAsync() As Task
             ' Run both operations concurrently - feed loading should not be blocked by feature query failures
