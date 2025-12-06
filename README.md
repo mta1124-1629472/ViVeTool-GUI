@@ -1,3 +1,12 @@
+> [!CAUTION]
+> # DEPRECATION NOTICE
+>
+> This Project is unfortunately deprecated due to number of colliding factors, like me having less Motivation and Time to work on ViVeTool GUI; and the State of Windows deterioating on a day to day basis, which made me switch away from Windows to Linux full time and permanently
+>
+> While it hurts me to stop working on a Project that garnered this much attention and Stars, it is better to officially declare it deprecated and unmaintained, instead of just denying the facts
+>
+> It was really fun working and gaining experience while developing ViVeTool GUI, if someone else wants to carry on with the Project feel free to create a GitHub Issue to discuss it
+
 ![GitHub all releases](https://img.shields.io/github/downloads/peterstrick/vivetool-gui/total)
 ![GitHub License](https://img.shields.io/github/license/peterstrick/vivetool-gui)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/peterstrick/vivetool-gui)
@@ -9,7 +18,7 @@
 ### Windows Feature Control GUI based on ViVeTool
 
 ## What is ViVeTool GUI?
-ViVeTool GUI let´s you easily enable, disable and search for new hidden Features in Windows Insider Builds, with the use of a Button and a pretty UI.
+ViVeTool GUI lets you easily enable, disable and search for new hidden Features in Windows Insider Builds, with the use of a Button and a pretty UI.
 
 ## Disclaimer.
 ### No one, including me / [PeterStrick](https://github.com/PeterStrick), [the creators of ViVe and ViVeTool](https://github.com/thebookisclosed/ViVe) or [the creators of mach2](https://github.com/riverar/mach2) are responsible for any damage or unintended side effects, this program might cause to your computer, by changing the Windows Feature Store. Use this program at your own risk.
@@ -58,7 +67,7 @@ Since ViVeTool GUI uses the ViVe API, Windows 10 Build 18963 (Version 2004) and 
 Apart from that, the only Requirement is .Net Framework 4.8
 
 ## Why not just use ViVeTool?
-Using ViVeTool GUI is more easier and user-friendly, besides it let's you also search for features and enable them with a few clicks.
+Using ViVeTool GUI is more easier and user-friendly, besides it lets you also search for features and enable them with a few clicks.
 
 # Licensing
 ViVeTool GUI uses Icons from [icons8.com](https://icons8.com/)
@@ -68,3 +77,4 @@ ViVeTool GUI is inspired by [ViVeTool](https://github.com/thebookisclosed/ViVe) 
 ViVeTool GUI uses [files](https://github.com/riverar/mach2/tree/master/features) from [mach2](https://github.com/riverar/mach2) for the Build Combo Box.
 
 ViVeTool GUI - Feature Scanner uses [mach2](https://github.com/riverar/mach2) to create it's Feature Lists
+
