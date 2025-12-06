@@ -447,7 +447,8 @@ Public Class ScannerUI
 
         'Calculate amount of Total Files in the Symbol Folder
         Try
-            Dim TotalFiles As Integer = IO.Directory.GetFiles(My.Settings.SymbolPath, "*.*").Count
+            'Use EnumerateFiles for better memory efficiency - doesn't load all paths into memory at once
+            Dim TotalFiles As Integer = IO.Directory.EnumerateFiles(My.Settings.SymbolPath, "*.*").Count
             Invoke(Sub() RL_SymbolFiles.Text = "Total Files in " & My.Settings.SymbolPath & ": " & TotalFiles.ToString)
         Catch ex As Exception
             Invoke(Sub() RL_SymbolFiles.Text = "Total Files in " & My.Settings.SymbolPath & ": IO Error")
@@ -455,7 +456,8 @@ Public Class ScannerUI
 
         'Calculate amount of Total Folders in the Symbol Folder
         Try
-            Dim TotalFolders As Integer = IO.Directory.GetDirectories(My.Settings.SymbolPath).Count
+            'Use EnumerateDirectories for better memory efficiency - doesn't load all paths into memory at once
+            Dim TotalFolders As Integer = IO.Directory.EnumerateDirectories(My.Settings.SymbolPath).Count
             Invoke(Sub() RL_SymbolFolders.Text = "Total Folders in " & My.Settings.SymbolPath & ": " & TotalFolders.ToString)
         Catch ex As Exception
             Invoke(Sub() RL_SymbolFolders.Text = "Total Folders in " & My.Settings.SymbolPath & ": IO Error")
@@ -464,22 +466,27 @@ Public Class ScannerUI
     End Sub
 
     ''' <summary>
-    ''' Variable that stores the Total File Size of the Symbol Folder
-    ''' </summary>
-    Dim TotalSize As Long = 0
-
-    ''' <summary>
     ''' Functions that get's the total Size of a Folder
     ''' </summary>
     ''' <param name="RootFolder">Folder to get the total Size from</param>
     ''' <returns>Total Folder Size of RootFolder as Long</returns>
     Public Function GetDirSize(RootFolder As String) As Long
-        Dim FolderInfo = New IO.DirectoryInfo(RootFolder)
-        For Each File In FolderInfo.GetFiles : TotalSize += File.Length
-        Next
-        For Each SubFolderInfo In FolderInfo.GetDirectories : GetDirSize(SubFolderInfo.FullName)
-        Next
-        Return TotalSize
+        'Use EnumerateFiles with SearchOption.AllDirectories for better performance
+        'This avoids the overhead of recursive function calls and the shared TotalSize variable bug
+        Dim totalSize As Long = 0
+        Try
+            For Each file In IO.Directory.EnumerateFiles(RootFolder, "*.*", IO.SearchOption.AllDirectories)
+                Try
+                    Dim fileInfo = New IO.FileInfo(file)
+                    totalSize += fileInfo.Length
+                Catch ex As Exception
+                    'Skip files that can't be accessed
+                End Try
+            Next
+        Catch ex As Exception
+            'Handle access denied or other directory enumeration errors
+        End Try
+        Return totalSize
     End Function
 
     ''' <summary>

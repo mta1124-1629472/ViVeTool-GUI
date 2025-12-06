@@ -374,7 +374,7 @@ Public Class GUI
         AppendMenu(hSysMenu, MF_SEPARATOR, 0, String.Empty)
 
         ' Add the About menu item
-        AppendMenu(hSysMenu, MF_STRING, 1, "&About…")
+        AppendMenu(hSysMenu, MF_STRING, 1, "&Aboutï¿½")
     End Sub
 
     ''' <summary>
@@ -450,6 +450,9 @@ Public Class GUI
 
             'For each line add a grid view entry
             Try
+                'Collect all row data first to avoid repeated UI thread invocations
+                Dim rowData As New List(Of Object())
+
                 For Each Line In IO.File.ReadAllLines(OFD.FileName)
                     If Line = "## Unknown:" Then
                         LineStage = "Modifiable"
@@ -468,18 +471,28 @@ Public Class GUI
                     'If the Line is not empty, continue
                     If Line IsNot "" AndAlso Line.Contains("#") = False Then
                         'Remove any Spaces from the first Str Array (Feature Name) and second Str Array (Feature ID)
-                        Str(0).Replace(" ", "")
-                        Str(1).Replace(" ", "")
+                        Dim featureName As String = Str(0).Replace(" ", "")
+                        Dim featureId As String = Str(1).Replace(" ", "")
                         'Get the Feature Enabled State from the currently processing line.
                         'RtlFeatureManager.QueryFeatureConfiguration will return Enabled, Disabled or throw a NullReferenceException for Default
                         Try
-                            Dim State As String = RtlFeatureManager.QueryFeatureConfiguration(CUInt(Str(1)), FeatureConfigurationSection.Runtime).EnabledState.ToString
-                            Invoke(Sub() RGV_MainGridView.Rows.Add(Str(0), Str(1), State, LineStage))
+                            Dim State As String = RtlFeatureManager.QueryFeatureConfiguration(CUInt(featureId), FeatureConfigurationSection.Runtime).EnabledState.ToString
+                            rowData.Add(New Object() {featureName, featureId, State, LineStage})
                         Catch ex As NullReferenceException
-                            Invoke(Sub() RGV_MainGridView.Rows.Add(Str(0), Str(1), "Default", LineStage))
+                            rowData.Add(New Object() {featureName, featureId, "Default", LineStage})
                         End Try
                     End If
                 Next
+
+                'Add all rows to the grid in a single batch on the UI thread
+                Invoke(Sub()
+                           RGV_MainGridView.BeginUpdate()
+                           For Each row As Object() In rowData
+                               RGV_MainGridView.Rows.Add(row)
+                           Next
+                           RGV_MainGridView.EndUpdate()
+                       End Sub)
+
                 'Move to the first row, remove the selection and change the Status Label to Done.
                 Invoke(Sub()
                            RGV_MainGridView.CurrentRow = RGV_MainGridView.Rows.Item(0)
@@ -587,6 +600,9 @@ Public Class GUI
             WebClient.DownloadFile("https://raw.githubusercontent.com/riverar/mach2/master/features/" & RDDL_Build.Text & ".txt", path)
 
             'For each line add a grid view entry
+            'Collect all row data first to avoid repeated UI thread invocations
+            Dim rowData As New List(Of Object())
+
             For Each Line In IO.File.ReadAllLines(path)
 
                 'Check Line Stage, used for Grouping
@@ -616,19 +632,28 @@ Public Class GUI
                 'If the Line is not empty, continue
                 If Line IsNot "" AndAlso Line.Contains("#") = False Then
                     'Remove any Spaces from the first Str Array (Feature Name) and second Str Array (Feature ID)
-                    Str(0).Replace(" ", "")
-                    Str(1).Replace(" ", "")
+                    Dim featureName As String = Str(0).Replace(" ", "")
+                    Dim featureId As String = Str(1).Replace(" ", "")
 
                     'Get the Feature Enabled State from the currently processing line.
                     'RtlFeatureManager.QueryFeatureConfiguration will return Enabled, Disabled or throw a NullReferenceException for Default
                     Try
-                        Dim State As String = RtlFeatureManager.QueryFeatureConfiguration(CUInt(Str(1)), FeatureConfigurationSection.Runtime).EnabledState.ToString
-                        Invoke(Sub() RGV_MainGridView.Rows.Add(Str(0), Str(1), State, LineStage))
+                        Dim State As String = RtlFeatureManager.QueryFeatureConfiguration(CUInt(featureId), FeatureConfigurationSection.Runtime).EnabledState.ToString
+                        rowData.Add(New Object() {featureName, featureId, State, LineStage})
                     Catch ex As Exception
-                        Invoke(Sub() RGV_MainGridView.Rows.Add(Str(0), Str(1), "Default", LineStage))
+                        rowData.Add(New Object() {featureName, featureId, "Default", LineStage})
                     End Try
                 End If
             Next
+
+            'Add all rows to the grid in a single batch on the UI thread
+            Invoke(Sub()
+                       RGV_MainGridView.BeginUpdate()
+                       For Each row As Object() In rowData
+                           RGV_MainGridView.Rows.Add(row)
+                       Next
+                       RGV_MainGridView.EndUpdate()
+                   End Sub)
 
             'Move to the first row, remove the selection and change the Status Label to Done.
             Invoke(Sub()
@@ -871,10 +896,14 @@ Public Class GUI
     ''' <returns>True if http://www.github.com responds. False if not</returns>
     Public Shared Function CheckForInternetConnection() As Boolean
         Try
-            Using client = New WebClient()
-                Using stream = client.OpenRead("http://www.github.com")
-                    Return True
-                End Using
+            'Use a HEAD request instead of downloading content - more efficient
+            Dim request As HttpWebRequest = DirectCast(WebRequest.Create("http://www.github.com"), HttpWebRequest)
+            request.Method = "HEAD"
+            request.Timeout = 5000 'Set a reasonable timeout of 5 seconds
+            Using response As HttpWebResponse = DirectCast(request.GetResponse(), HttpWebResponse)
+                Return response.StatusCode = HttpStatusCode.OK OrElse
+                       response.StatusCode = HttpStatusCode.Moved OrElse
+                       response.StatusCode = HttpStatusCode.MovedPermanently
             End Using
         Catch
             Return False
