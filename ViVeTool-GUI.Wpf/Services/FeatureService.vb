@@ -18,70 +18,107 @@ Option Explicit On
 Option Strict On
 
 Imports System.Collections.ObjectModel
+Imports Albacore.ViVe
 Imports ViVeTool_GUI.Wpf.Models
 
 Namespace Services
     ''' <summary>
     ''' Service for managing Windows feature configurations.
-    ''' Wraps future ViVe/RtlFeatureManager calls.
+    ''' Uses Albacore.ViVe.RtlFeatureManager to query and modify Windows features.
     ''' </summary>
     Public Class FeatureService
         ''' <summary>
-        ''' Gets all available features from the system.
+        ''' Gets all available features from the system by querying RtlFeatureManager.
         ''' </summary>
         ''' <returns>A collection of feature items.</returns>
         Public Async Function GetFeaturesAsync() As Task(Of ObservableCollection(Of FeatureItem))
-            ' TODO: Implement using Albacore.ViVe.RtlFeatureManager
-            ' Example:
-            ' Dim features = Albacore.ViVe.RtlFeatureManager.QueryAllFeatureConfigurations()
-            ' Return features.Select(Function(f) New FeatureItem(f.FeatureId, f.FeatureName, ...))
-            
-            Await Task.Delay(100) ' Simulated async operation
-            
-            ' Return sample data for scaffold testing
-            Return New ObservableCollection(Of FeatureItem)() From {
-                New FeatureItem(12345678, "Sample Feature 1", "Enabled", True, "This is a sample feature for testing"),
-                New FeatureItem(23456789, "Sample Feature 2", "Disabled", False, "Another sample feature"),
-                New FeatureItem(34567890, "Sample Feature 3", "Default", False, "Feature with default state"),
-                New FeatureItem(45678901, "Hidden Feature", "Enabled", True, "A hidden experimental feature"),
-                New FeatureItem(56789012, "Test Feature", "Disabled", False, "For testing purposes only")
-            }
+            Return Await Task.Run(Function() GetFeaturesCore())
         End Function
 
         ''' <summary>
-        ''' Enables a specific feature.
+        ''' Core method to query all feature configurations from the system.
+        ''' </summary>
+        Private Function GetFeaturesCore() As ObservableCollection(Of FeatureItem)
+            Dim result As New ObservableCollection(Of FeatureItem)()
+
+            Try
+                ' Query all feature configurations from both Runtime and Boot sections
+                Dim runtimeConfigs = RtlFeatureManager.QueryAllFeatureConfigurations(FeatureConfigurationSection.Runtime)
+                Dim bootConfigs = RtlFeatureManager.QueryAllFeatureConfigurations(FeatureConfigurationSection.Boot)
+
+                ' Create a dictionary to merge configurations by FeatureId
+                Dim featureDict As New Dictionary(Of UInteger, FeatureItem)()
+
+                ' Process runtime configurations first
+                If runtimeConfigs IsNot Nothing Then
+                    For Each config In runtimeConfigs
+                        Dim stateStr As String = config.EnabledState.ToString()
+                        Dim isEnabled As Boolean = (config.EnabledState = FeatureEnabledState.Enabled)
+                        Dim featureItem As New FeatureItem(
+                            CInt(config.FeatureId),
+                            $"Feature {config.FeatureId}",
+                            stateStr,
+                            isEnabled,
+                            $"Group: {config.Group}, Variant: {config.Variant}"
+                        )
+                        featureDict(config.FeatureId) = featureItem
+                    Next
+                End If
+
+                ' Process boot configurations (may override or add to runtime)
+                If bootConfigs IsNot Nothing Then
+                    For Each config In bootConfigs
+                        If Not featureDict.ContainsKey(config.FeatureId) Then
+                            Dim stateStr As String = config.EnabledState.ToString()
+                            Dim isEnabled As Boolean = (config.EnabledState = FeatureEnabledState.Enabled)
+                            Dim featureItem As New FeatureItem(
+                                CInt(config.FeatureId),
+                                $"Feature {config.FeatureId}",
+                                stateStr,
+                                isEnabled,
+                                $"Group: {config.Group}, Variant: {config.Variant} (Boot)"
+                            )
+                            featureDict(config.FeatureId) = featureItem
+                        End If
+                    Next
+                End If
+
+                ' Add all features to the result collection
+                For Each kvp In featureDict.OrderBy(Function(x) x.Key)
+                    result.Add(kvp.Value)
+                Next
+
+            Catch ex As Exception
+                ' If querying fails (e.g., on non-Windows or permission issues),
+                ' return an empty collection with an error indicator
+                result.Add(New FeatureItem(
+                    0,
+                    "Error loading features",
+                    "Error",
+                    False,
+                    $"Failed to query features: {ex.Message}"
+                ))
+            End Try
+
+            Return result
+        End Function
+
+        ''' <summary>
+        ''' Enables a specific feature by setting its EnabledState to Enabled.
         ''' </summary>
         ''' <param name="featureId">The feature ID to enable.</param>
         ''' <returns>True if successful, false otherwise.</returns>
         Public Async Function EnableFeatureAsync(featureId As Integer) As Task(Of Boolean)
-            ' TODO: Implement using Albacore.ViVe.RtlFeatureManager
-            ' Example:
-            ' Albacore.ViVe.RtlFeatureManager.SetFeatureConfigurations(
-            '     New Albacore.ViVe.FeatureConfiguration() With {
-            '         .FeatureId = featureId,
-            '         .EnabledState = Albacore.ViVe.FeatureEnabledState.Enabled
-            '     })
-            
-            Await Task.Delay(100) ' Simulated async operation
-            Return True
+            Return Await Task.Run(Function() SetFeatureConfiguration(CUInt(featureId), FeatureEnabledState.Enabled))
         End Function
 
         ''' <summary>
-        ''' Disables a specific feature.
+        ''' Disables a specific feature by setting its EnabledState to Disabled.
         ''' </summary>
         ''' <param name="featureId">The feature ID to disable.</param>
         ''' <returns>True if successful, false otherwise.</returns>
         Public Async Function DisableFeatureAsync(featureId As Integer) As Task(Of Boolean)
-            ' TODO: Implement using Albacore.ViVe.RtlFeatureManager
-            ' Example:
-            ' Albacore.ViVe.RtlFeatureManager.SetFeatureConfigurations(
-            '     New Albacore.ViVe.FeatureConfiguration() With {
-            '         .FeatureId = featureId,
-            '         .EnabledState = Albacore.ViVe.FeatureEnabledState.Disabled
-            '     })
-            
-            Await Task.Delay(100) ' Simulated async operation
-            Return True
+            Return Await Task.Run(Function() SetFeatureConfiguration(CUInt(featureId), FeatureEnabledState.Disabled))
         End Function
 
         ''' <summary>
@@ -90,12 +127,7 @@ Namespace Services
         ''' <param name="featureId">The feature ID to revert.</param>
         ''' <returns>True if successful, false otherwise.</returns>
         Public Async Function RevertFeatureAsync(featureId As Integer) As Task(Of Boolean)
-            ' TODO: Implement using Albacore.ViVe.RtlFeatureManager
-            ' Example:
-            ' Albacore.ViVe.RtlFeatureManager.DeleteFeatureConfigurations(featureId)
-            
-            Await Task.Delay(100) ' Simulated async operation
-            Return True
+            Return Await Task.Run(Function() SetFeatureConfiguration(CUInt(featureId), FeatureEnabledState.Default))
         End Function
 
         ''' <summary>
@@ -110,6 +142,100 @@ Namespace Services
             Else
                 Return Await DisableFeatureAsync(featureId)
             End If
+        End Function
+
+        ''' <summary>
+        ''' Sets a feature configuration using RtlFeatureManager.
+        ''' This method sets both boot and live configurations.
+        ''' </summary>
+        ''' <param name="featureId">The feature ID to configure.</param>
+        ''' <param name="enabledState">The desired enabled state.</param>
+        ''' <returns>True if successful, false otherwise.</returns>
+        Private Function SetFeatureConfiguration(featureId As UInteger, enabledState As FeatureEnabledState) As Boolean
+            Try
+                ' Create the feature configuration
+                Dim config As New FeatureConfiguration() With {
+                    .FeatureId = featureId,
+                    .EnabledState = enabledState,
+                    .EnabledStateOptions = 1,
+                    .Group = 4,
+                    .Variant = 0,
+                    .VariantPayload = 0,
+                    .VariantPayloadKind = 0,
+                    .Action = FeatureConfigurationAction.UpdateEnabledState
+                }
+
+                Dim configs As New List(Of FeatureConfiguration) From {config}
+
+                ' Set both boot and live configurations
+                ' On successful operations:
+                ' - SetBootFeatureConfigurations returns True
+                ' - SetLiveFeatureConfigurations returns 0
+                Dim bootResult As Boolean = RtlFeatureManager.SetBootFeatureConfigurations(configs)
+                Dim liveResult As Integer = RtlFeatureManager.SetLiveFeatureConfigurations(configs, FeatureConfigurationSection.Runtime)
+
+                Return bootResult AndAlso (liveResult = 0)
+            Catch ex As Exception
+                ' Log or handle the exception as needed
+                ' For now, we return false to indicate failure
+                Return False
+            End Try
+        End Function
+
+        ''' <summary>
+        ''' Gets the last error message from a failed operation.
+        ''' </summary>
+        Private _lastErrorMessage As String = String.Empty
+
+        ''' <summary>
+        ''' Gets the last error message from a failed operation.
+        ''' </summary>
+        Public ReadOnly Property LastErrorMessage As String
+            Get
+                Return _lastErrorMessage
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' Queries a single feature's current configuration.
+        ''' </summary>
+        ''' <param name="featureId">The feature ID to query.</param>
+        ''' <returns>A FeatureItem if found, Nothing otherwise.</returns>
+        Public Async Function GetFeatureAsync(featureId As Integer) As Task(Of FeatureItem)
+            Return Await Task.Run(Function() GetFeatureCore(CUInt(featureId)))
+        End Function
+
+        ''' <summary>
+        ''' Core method to query a single feature configuration.
+        ''' </summary>
+        Private Function GetFeatureCore(featureId As UInteger) As FeatureItem
+            Try
+                Dim config = RtlFeatureManager.QueryFeatureConfiguration(featureId, FeatureConfigurationSection.Runtime)
+                If config IsNot Nothing Then
+                    Dim stateStr As String = config.EnabledState.ToString()
+                    Dim isEnabled As Boolean = (config.EnabledState = FeatureEnabledState.Enabled)
+                    Return New FeatureItem(
+                        CInt(config.FeatureId),
+                        $"Feature {config.FeatureId}",
+                        stateStr,
+                        isEnabled,
+                        $"Group: {config.Group}, Variant: {config.Variant}"
+                    )
+                End If
+            Catch ex As NullReferenceException
+                ' Feature not configured, return default state
+                Return New FeatureItem(
+                    CInt(featureId),
+                    $"Feature {featureId}",
+                    "Default",
+                    False,
+                    "Not configured"
+                )
+            Catch ex As Exception
+                _lastErrorMessage = ex.Message
+            End Try
+
+            Return Nothing
         End Function
     End Class
 End Namespace
