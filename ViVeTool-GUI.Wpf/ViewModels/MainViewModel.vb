@@ -33,6 +33,12 @@ Namespace ViewModels
     Partial Public Class MainViewModel
         Inherits ObservableObject
 
+        ' Constants for placeholder/warning detection
+        ''' <summary>Placeholder text used when no features could be loaded.</summary>
+        Private Const NoFeaturesLoadedText As String = "No features loaded"
+        ''' <summary>Maximum allowed group value per Windows RTL Feature Manager constraints.</summary>
+        Private Const MaxGroupValueText As String = "14"
+
         ' Constants - Legacy external scanner EXE is no longer used
         ' The scanner is now integrated into the WPF app via FeatureScannerDialog
 
@@ -609,8 +615,8 @@ Namespace ViewModels
                     Features.Add(feature)
                 Next
 
-                ' Check if the service returned a warning row (feature ID 0 with "No features loaded" name)
-                Dim hasNoFeatures = loadedFeatures.Any(Function(f) f.Id = 0 AndAlso f.Name = "No features loaded")
+                ' Check if the service returned a warning row (feature ID 0 with placeholder name)
+                Dim hasNoFeatures = loadedFeatures.Any(Function(f) f.Id = 0 AndAlso f.Name = NoFeaturesLoadedText)
                 
                 ' Check for warnings from the service (non-blocking issues)
                 Dim warnings = _featureService.Warnings
@@ -618,13 +624,13 @@ Namespace ViewModels
 
                 ' Consolidate warnings for display (avoid duplicate messages)
                 If hasWarnings Then
-                    ' Check for group-related errors specifically
-                    Dim groupWarnings = warnings.Where(Function(w) w.Contains("Group") OrElse w.Contains("group")).ToList()
-                    Dim otherWarnings = warnings.Where(Function(w) Not (w.Contains("Group") OrElse w.Contains("group"))).ToList()
+                    ' Check for group-related errors using case-insensitive matching
+                    Dim groupWarnings = warnings.Where(Function(w) w.IndexOf("Group", StringComparison.OrdinalIgnoreCase) >= 0 OrElse w.Contains(MaxGroupValueText)).ToList()
+                    Dim otherWarnings = warnings.Where(Function(w) w.IndexOf("Group", StringComparison.OrdinalIgnoreCase) < 0 AndAlso Not w.Contains(MaxGroupValueText)).ToList()
 
                     If groupWarnings.Count > 0 Then
                         ' Consolidate group warnings into a single message
-                        LocalFeatureWarning = "Local feature query unavailable: Group value constraints exceeded. You can still view feature lists from the feed."
+                        LocalFeatureWarning = $"Local feature query unavailable: Group value constraints exceeded (max {MaxGroupValueText}). You can still view feature lists from the feed."
                     ElseIf otherWarnings.Count > 0 Then
                         LocalFeatureWarning = $"Local feature query issues: {String.Join("; ", otherWarnings.Take(2))}"
                     End If
@@ -647,8 +653,9 @@ Namespace ViewModels
                 End If
             Catch ex As Exception
                 ' Even on exception, don't block the app - log and continue
-                ' Check for group-related exceptions specifically
-                If ex.Message.Contains("Group") OrElse ex.Message.Contains("group") OrElse ex.Message.Contains("14") Then
+                ' Check for group-related exceptions using case-insensitive matching
+                If ex.Message.IndexOf("Group", StringComparison.OrdinalIgnoreCase) >= 0 OrElse 
+                   ex.Message.Contains(MaxGroupValueText) Then
                     LocalFeatureWarning = $"Local feature query unavailable: {ex.Message}"
                 Else
                     LocalFeatureWarning = $"Local feature query failed: {ex.Message}"
@@ -700,7 +707,7 @@ Namespace ViewModels
             End If
 
             ' Check if features were loaded (ignoring the warning placeholder)
-            Dim realFeatureCount = Features.Where(Function(f) f.Id <> 0 OrElse f.Name <> "No features loaded").Count()
+            Dim realFeatureCount = Features.Where(Function(f) f.Id <> 0 OrElse f.Name <> NoFeaturesLoadedText).Count()
             If realFeatureCount > 0 Then
                 messages.Add($"{realFeatureCount} features")
             ElseIf LocalFeatureWarning.Length > 0 Then
