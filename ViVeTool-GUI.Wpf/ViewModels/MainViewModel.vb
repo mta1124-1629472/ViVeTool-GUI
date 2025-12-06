@@ -759,6 +759,14 @@ Namespace ViewModels
         End Sub
 
         ''' <summary>
+        ''' Loads features from a specific file path (public API for Feature Scanner integration).
+        ''' </summary>
+        ''' <param name="filePath">The path to the feature list file.</param>
+        Public Sub LoadFeaturesFromFile(filePath As String)
+            LoadFromFileAsync(filePath)
+        End Sub
+
+        ''' <summary>
         ''' Loads features from a local file asynchronously.
         ''' </summary>
         Private Async Sub LoadFromFileAsync(filePath As String)
@@ -894,7 +902,14 @@ Namespace ViewModels
                 If result = True AndAlso dialog.ScanResult IsNot Nothing AndAlso dialog.ScanResult.Success Then
                     ' Populate the publish panel with the scan result
                     SetScannerResult(dialog.ScanResult.OutputFilePath, Services.FeatureScannerService.GetCurrentBuildNumber())
-                    StatusMessage = "Feature Scanner completed. Publish panel populated with scan result."
+                    
+                    ' Also load the scanned features into the main grid
+                    If Not String.IsNullOrWhiteSpace(dialog.ScanResult.OutputFilePath) AndAlso System.IO.File.Exists(dialog.ScanResult.OutputFilePath) Then
+                        LoadFeaturesFromFile(dialog.ScanResult.OutputFilePath)
+                        StatusMessage = "Feature Scanner completed. Features loaded and publish panel populated."
+                    Else
+                        StatusMessage = "Feature Scanner completed. Publish panel populated with scan result."
+                    End If
                 ElseIf dialog.ScanResult IsNot Nothing AndAlso dialog.ScanResult.IsCancelled Then
                     StatusMessage = "Feature Scanner was cancelled."
                 Else

@@ -87,7 +87,7 @@ Namespace Services
         ''' <param name="applyRtlOverlay">Whether to overlay RTL feature states on top of feed data.</param>
         ''' <returns>A collection of feature items.</returns>
         Public Async Function GetFeaturesFromFeedAsync(buildNumber As String, Optional applyRtlOverlay As Boolean = True) As Task(Of ObservableCollection(Of FeatureItem))
-            Return Await Task.Run(Function() GetFeaturesFromFeedCore(buildNumber, applyRtlOverlay))
+            Return Await GetFeaturesFromFeedCoreAsync(buildNumber, applyRtlOverlay)
         End Function
 
         ''' <summary>
@@ -97,7 +97,7 @@ Namespace Services
         ''' <param name="applyRtlOverlay">Whether to overlay RTL feature states on top of file data.</param>
         ''' <returns>A collection of feature items.</returns>
         Public Async Function GetFeaturesFromFileAsync(filePath As String, Optional applyRtlOverlay As Boolean = True) As Task(Of ObservableCollection(Of FeatureItem))
-            Return Await Task.Run(Function() GetFeaturesFromFileCore(filePath, applyRtlOverlay))
+            Return Await GetFeaturesFromFileCoreAsync(filePath, applyRtlOverlay)
         End Function
 
         ' Maximum allowed group value according to Windows RTL Feature Manager
@@ -334,7 +334,7 @@ Namespace Services
         ''' <summary>
         ''' Core method to load features from GitHub feed with optional RTL overlay.
         ''' </summary>
-        Private Function GetFeaturesFromFeedCore(buildNumber As String, applyRtlOverlay As Boolean) As ObservableCollection(Of FeatureItem)
+        Private Async Function GetFeaturesFromFeedCoreAsync(buildNumber As String, applyRtlOverlay As Boolean) As Task(Of ObservableCollection(Of FeatureItem))
             Dim result As New ObservableCollection(Of FeatureItem)()
             _warnings.Clear()
 
@@ -343,7 +343,7 @@ Namespace Services
                 Dim targetBuild = buildNumber
                 If String.IsNullOrWhiteSpace(targetBuild) Then
                     ' Get latest build from feed
-                    Dim feedInfo = _gitHubService.GetLatestFeedInfoAsync().Result
+                    Dim feedInfo = Await _gitHubService.GetLatestFeedInfoAsync()
                     If feedInfo IsNot Nothing AndAlso Not String.IsNullOrWhiteSpace(feedInfo.LatestBuild) Then
                         targetBuild = feedInfo.LatestBuild
                     Else
@@ -356,7 +356,7 @@ Namespace Services
                 End If
 
                 ' Load feature entries from feed
-                Dim entries = _gitHubService.GetFeatureEntriesForBuildAsync(targetBuild).Result
+                Dim entries = Await _gitHubService.GetFeatureEntriesForBuildAsync(targetBuild)
                 If entries Is Nothing OrElse entries.Count = 0 Then
                     Dim warning = $"No features found in feed for build {targetBuild}"
                     _warnings.Add(warning)
@@ -414,7 +414,7 @@ Namespace Services
         ''' <summary>
         ''' Core method to load features from a local file with optional RTL overlay.
         ''' </summary>
-        Private Function GetFeaturesFromFileCore(filePath As String, applyRtlOverlay As Boolean) As ObservableCollection(Of FeatureItem)
+        Private Async Function GetFeaturesFromFileCoreAsync(filePath As String, applyRtlOverlay As Boolean) As Task(Of ObservableCollection(Of FeatureItem))
             Dim result As New ObservableCollection(Of FeatureItem)()
             _warnings.Clear()
 
@@ -427,8 +427,8 @@ Namespace Services
                     Return result
                 End If
 
-                ' Read file content
-                Dim content = System.IO.File.ReadAllText(filePath)
+                ' Read file content (use Task.Run for file I/O to avoid blocking UI)
+                Dim content = Await Task.Run(Function() System.IO.File.ReadAllText(filePath))
                 Dim entries As List(Of FeatureEntry) = Nothing
 
                 ' Try to parse based on file extension
