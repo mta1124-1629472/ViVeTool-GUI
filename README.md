@@ -9,6 +9,24 @@
 # ViVeTool GUI <img src="/images/icons8-advertisement-page-96.png" alt="ViVeTool GUI Logo" width="32"/> 
 ### Windows Feature Control GUI based on ViVeTool
 
+## Project Status
+
+> **Note:** This is a maintained fork/successor of [PeterStrick/ViVeTool-GUI](https://github.com/PeterStrick/ViVeTool-GUI), which is now deprecated. Active development continues here.
+
+**Current Targets:**
+- **WinForms Legacy (.NET Framework 4.8):** The current stable release
+- **WPF .NET 8 Migration:** In progress — modernizing the UI and runtime
+
+## Roadmap
+
+- [ ] WPF migration (modern UI with .NET 8)
+- [ ] Feature-list feed replacement (latest.json + per-build CSV)
+- [ ] Scanner UX improvements
+- [ ] Publish via GitHub Actions `workflow_dispatch`
+- [ ] Localization/resource migration
+
+---
+
 ## What is ViVeTool GUI?
 ViVeTool GUI lets you easily enable, disable and search for new hidden Features in Windows Insider Builds, with the use of a Button and a pretty UI.
 
@@ -60,6 +78,22 @@ Apart from that, the only Requirement is .Net Framework 4.8
 
 ## Why not just use ViVeTool?
 Using ViVeTool GUI is more easier and user-friendly, besides it lets you also search for features and enable them with a few clicks.
+
+## Building & Running
+
+For detailed build instructions, see [building.md](building.md).
+
+**Quick Start (WinForms / .NET Framework 4.8):**
+1. Open `ViVeTool_GUI.sln` in Visual Studio 2022
+2. Restore NuGet packages when prompted
+3. Reference the Telerik DLLs from `lib\RCWF\2021.3.1109.40` (or install Telerik UI for WinForms)
+4. Build and run
+
+> **WPF Migration:** Once the WPF scaffold is merged, additional build instructions will be provided for the .NET 8 version.
+
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
 
 # Licensing
 ViVeTool GUI uses Icons from [icons8.com](https://icons8.com/)

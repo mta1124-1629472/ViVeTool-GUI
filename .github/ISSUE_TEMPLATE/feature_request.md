@@ -3,9 +3,15 @@ name: Feature request
 about: Suggest an idea for this project
 title: ''
 labels: 'Enhancement :star:'
-assignees: PeterStrick
+assignees: ''
 
 ---
+
+**Motivation**
+Why is this feature needed? What problem does it solve?
+
+**Scope**
+What is the scope of this feature? (UI change, new functionality, API change, etc.)
 
 **Is your feature request related to a problem? Please describe.**
 A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]

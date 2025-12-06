@@ -3,9 +3,13 @@ name: Bug report
 about: Create a report to help us improve
 title: "[Bug] "
 labels: 'Bug :bug:'
-assignees: PeterStrick
+assignees: ''
 
 ---
+
+**Environment**
+- Windows Build: [e.g., 22631.3880]
+- ViVeTool-GUI Version: [e.g., 0.3.4]
 
 **Describe the bug**
 A clear and concise description of what the bug is.
@@ -20,9 +24,15 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
+**Actual behavior**
+A clear and concise description of what actually happens.
+
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
- - Windows Build: 
- - ViVeTool-GUI Version:
+**Logs / Error Messages**
+If applicable, paste any error messages or relevant log output below:
+
+```
+Paste logs here
+```
