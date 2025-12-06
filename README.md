@@ -1,119 +1,95 @@
+# ViVeTool-GUI
 
-![GitHub all releases](https://img.shields.io/github/downloads/peterstrick/vivetool-gui/total)
-![GitHub License](https://img.shields.io/github/license/peterstrick/vivetool-gui)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/peterstrick/vivetool-gui)
-[![](https://dcbadge.vercel.app/api/server/8vDFXEucp2?style=flat)](https://discord.gg/8vDFXEucp2)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PeterStrick_ViVeTool-GUI&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PeterStrick_ViVeTool-GUI)
-[![Translation](https://weblate.rawrr.dev/widgets/vivetool-gui/-/svg-badge.svg)](https://weblate.rawrr.dev/engage/vivetool-gui)
+Note: This repository is a fork of the deprecated ViVeTool-GUI originally maintained by PeterStrick. The original repository is deprecated; this fork continues active maintenance and development.
 
-# ViVeTool GUI <img src="/images/icons8-advertisement-page-96.png" alt="ViVeTool GUI Logo" width="32"/> 
-### Windows Feature Control GUI based on ViVeTool
+Windows Feature Control GUI based on ViVe / ViVeTool.
 
-## What is ViVeTool GUI?
-ViVeTool GUI lets you easily enable, disable and search for new hidden Features in Windows Insider Builds, with the use of a Button and a pretty UI.
+Fork & Origin
+----------------
 
-## Disclaimer.
-### No one, including me, [the creator of ViVe GUI](https://github.com/PeterStrick/ViVeTool-GUI), [the creators of ViVe and ViVeTool](https://github.com/thebookisclosed/ViVe) or [the creators of mach2](https://github.com/riverar/mach2) are responsible for any damage or unintended side effects, this program might cause to your computer, by changing the Windows Feature Store. Use this program at your own risk.
+- This repository is a fork of the original ViVeTool-GUI by PeterStrick ([PeterStrick/ViVeTool-GUI](https://github.com/PeterStrick/ViVeTool-GUI)). The original project is marked as deprecated; this fork continues active maintenance and modernization efforts.
 
-## How to use it?
-Using it is simple, 
-Either:
+Deprecation note
+----------------
 
-1. Select the Build for which you want to enable or disable features for.
-2. Wait for it to load in, open one of the Groups by pressing the Arrow, and select the Feature that you are looking for.
-3. Press on Perform Action and perform your desired action for the entered feature ID.
+- The original WinForms-based UI in the upstream repository is deprecated in favor of the WPF rewrite. If you are looking for legacy behavior or old releases, refer to the upstream repository archives.
 
-<img width="511" height="355" src="/images/Method1.gif" alt="Image showing you how to perform Method 1" />
+Contributing & Support
+----------------------
 
+- Contributions and issues are welcome. See `CONTRIBUTING.md` for guidelines on patches, PRs, and CI expectations.
+- For security or vulnerability reports, follow the guidance in `SECURITY.md`.
 
----
+Contact
+-------
 
-Or:
-1. Press on "Manually change a Feature" (F12)
-2. Enter a Feature ID
-3. Press on Perform Action and perform your desired action for the selected feature.
+- Primary maintainer: mta1124-1629472
+- For release/CI questions open an issue or ping maintainers via the repository's issue tracker.
 
-<img width="511" height="355" src="/images/Method2.gif" alt="Image showing you how to perform Method 2" />
+Status
 
----
+- This repo is actively maintained — original WinForms is legacy, WPF (.NET 9) is current, Telerik dependency removal in progress.
 
-## What are the additional features?
-Apart from being able to manage features, ViVeTool GUI let´s you also:
-- Load in a Feature List of other Builds
-- Search for Features 
-- Sort Features by Feature Name, Feature ID or Feature State
-- Group Features by: Always Enabled, Always Disabled, Enabled by Default, Disabled by Default and Modifiable
-- Copy Feature Names and IDs by right-clicking them
-- Switch between Dark, Light and System Mode (WPF version supports Windows 11 Fluent theme with accent colors)
-- Automatically load the latest Feature List when starting ViVeTool GUI
-- Scan a Windows Build for Hidden Features to create your own Feature List
-- Use ViVeTool GUI in multiple translated Languages
-- Fix the LastKnownGood Store, as well as the A/B Testing Priorities for ViVeTool Features
-- and at last, view the About Box by either pressing on the About Icon, or selecting the "About..." Item in the Application System Menu.
+Maintainers
 
-<img width="511" height="175" src="/images/Searching.gif" alt="Image showing you how to search" />
+- Primary maintainer: mta1124-1629472
+- Contact: see SECURITY.md for vulnerability reporting
 
-## What are the System Requirements?
-Since ViVeTool GUI uses the ViVe API, Windows 10 Build 18963 (Version 2004) and newer is the only OS Requirement.
+License
 
-Apart from that, the only Requirement is .Net Framework 4.8 (WinForms version) or .NET 9 (WPF version).
+- This project is licensed under GPLv3. See LICENSE for details.
 
-### WPF Version (.NET 9)
-The new WPF version features:
-- Modern Windows 11 Fluent theme with light/dark/system mode support
-- Windows accent color integration
-- ThemeMode experimental API (warning WPF0001 is suppressed in the project)
+Overview
 
-See [MIGRATION_NOTES.md](MIGRATION_NOTES.md) for more details on the WPF version.
+- ViVeTool-GUI provides a graphical frontend for ViVe / ViVeTool feature control.
+- The legacy WinForms UI is retained for historical reference; the WPF UI (targeting .NET 9) is the actively developed and supported implementation.
 
-## Why not just use ViVeTool?
-Using ViVeTool GUI is more easier and user-friendly, besides it lets you also search for features and enable them with a few clicks.
+Feed / Publishing workflow (summary)
 
-## Feature Feed
+- Builds and publish artifacts are performed by GitHub Actions workflows.
+- Feed/Publishing trigger:
+  - Releases (tag push) trigger publish workflow for packaged installers and artifacts.
+  - Manually-triggered workflow_dispatch workflows exist for preview feed publishes.
+- Scanner and CI:
+  - A security/analysis scanner runs on pull requests (see .github/workflows/*).
+  - WPF package builds and smoke tests run in CI for PRs targeting the WPF branch.
 
-ViVeTool GUI uses a GitHub-hosted feature feed to provide up-to-date feature lists for different Windows builds. The feed consists of:
+Example publish workflow snippet
 
-- `latest.json` - Metadata about available builds and the latest build number
-- `features/{build}/features.csv` or `features.json` - Per-build feature lists
+```yaml
+# Example: .github/workflows/publish.yml
+name: Publish
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
 
-### Consuming the Feed
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+      - name: Build WPF
+        run: dotnet publish ./src/ViVeTool.WPF/ViVeTool.WPF.csproj -c Release -r win-x64 --self-contained
+      - name: Package artifacts
+        run: | 
+          # package / sign steps here
+      - name: Publish to feed
+        run: |
+          # push to GitHub Releases / private feed
+```
 
-The WPF version automatically fetches feature lists from the feed with:
-- **ETag-based caching** - Only downloads when content has changed
-- **Offline fallback** - Uses cached data when network is unavailable
-- **Legacy support** - Falls back to mach2 format for older builds
+Future plans
 
-### Publishing Feature Lists (Maintainers Only)
+- Harden WPF tests and add automated UI tests for core flows.
+- Provide signed installer artifacts in the release pipeline.
 
-After running the Feature Scanner to scan a Windows build for hidden features, you can publish the results to the feed:
+Where to start
 
-1. **Launch Feature Scanner** from the WPF app
-2. Complete the scan process to generate a feature list
-3. Click **"Publish via GitHub Actions"** in the publish panel
-4. Enter the build number, select format (CSV/JSON), and provide your GitHub token
-5. The workflow will add your feature list to the repository
-
-**Note:** Publishing is restricted to repository maintainers. If you receive a 403 error, please contact a maintainer to publish your feature list.
-
-### Setting up FEED_PUBLISH_TOKEN (Repository Maintainers)
-
-To enable the publish workflow, maintainers need to set up a GitHub secret:
-
-1. Go to **Settings → Secrets and variables → Actions**
-2. Click **New repository secret**
-3. Name: `FEED_PUBLISH_TOKEN`
-4. Value: A Personal Access Token (PAT) with `repo` and `workflow` permissions
-5. Click **Add secret**
-
-The token is used by the GitHub Actions workflow to commit changes to the repository. It is never exposed to client code.
-
-# Licensing
-ViVeTool GUI uses Icons from [icons8.com](https://icons8.com/)
-
-ViVeTool GUI is inspired by [ViVeTool](https://github.com/thebookisclosed/ViVe) and uses the [ViVe API](https://github.com/thebookisclosed/ViVe/tree/master/ViVe)
-
-ViVeTool GUI uses [files](https://github.com/riverar/mach2/tree/master/features) from [mach2](https://github.com/riverar/mach2) for the Build Combo Box.
-
-ViVeTool GUI - Feature Scanner uses [mach2](https://github.com/riverar/mach2) to create it's Feature Lists
-
-
+- See CONTRIBUTING.md for branch/PR workflow, coding style, and WPF build/test/publish guidelines.
+- See .github/ISSUE_TEMPLATE and .github/PULL_REQUEST_TEMPLATE for how to open issues and PRs.
