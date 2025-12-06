@@ -75,15 +75,64 @@ ViVeTool GUI is a modern, user-friendly graphical interface for managing hidden 
 - **Theme Customization** - Dark, light, and system mode support
 - **Feature Scanner** - Scan your Windows build to discover hidden features
 
-### WPF Version (.NET 9) Enhancements
+## Version Comparison: WPF vs Legacy
 
-The new WPF version features:
-- **Windows 11 Fluent Design** - Modern, polished interface with accent color support
-- **ThemeMode API** - Native Windows theme integration
-- **Improved Performance** - Built on modern .NET runtime
-- **Better Accessibility** - Enhanced keyboard navigation and screen reader support
+### WPF Version (.NET 9) - Recommended
 
-See [MIGRATION_NOTES.md](https://github.com/mta1124-1629472/ViVeTool-GUI/blob/master/MIGRATION_NOTES.md) for detailed information.
+**Modern Features:**
+- ✅ **Windows 11 Fluent Design** - Native Windows 11 UI with accent color integration
+- ✅ **ThemeMode API** - System theme detection and integration
+- ✅ **Modern .NET Runtime** - Better performance and security updates
+- ✅ **Enhanced Accessibility** - Improved keyboard navigation and screen reader support
+- ✅ **Smart Feature Feed Caching** - ETag-based caching with offline fallback
+- ✅ **Feature Scanner Integration** - Built-in discovery tools for new features
+- ✅ **GitHub Actions Publishing** - Direct feature list publishing for maintainers
+
+**Recommended For:**
+- Windows 11 users
+- Users wanting the latest UI/UX improvements
+- Advanced feature scanning needs
+- Active Insider program participants
+
+### Legacy WinForms Version (.NET Framework 4.8)
+
+**Capabilities:**
+- ✅ Core feature enable/disable functionality
+- ✅ Search and filtering
+- ✅ Feature grouping and sorting
+- ✅ Basic theme support (Windows default)
+- ✅ Multi-build feature list loading
+- ❌ No Windows 11 Fluent Design
+- ❌ No advanced theme customization
+- ❌ Limited feature scanning capabilities
+- ❌ No smart caching system
+- ❌ No GitHub Actions publishing
+
+**Recommended For:**
+- Windows 10 users
+- Legacy system compatibility
+- Minimal resource usage requirements
+- Users preferring traditional UI style
+
+### Direct Feature Comparison
+
+| Feature | WPF Version | Legacy WinForms |
+|---------|------------|----------------|
+| **UI Framework** | Windows 11 Fluent | Classic WinForms |
+| **Theme Support** | Light/Dark/System | Windows Default |
+| **Accent Color Integration** | ✅ | ❌ |
+| **Feature Scanner** | ✅ Advanced | ⚠️ Limited |
+| **Smart Caching** | ✅ ETag-based | ⚠️ Basic |
+| **GitHub Publishing** | ✅ Native | ❌ |
+| **Keyboard Accessibility** | ✅ Enhanced | ⚠️ Standard |
+| **Performance** | ✅ Modern .NET 9 | ⚠️ .NET Framework |
+| **Security Updates** | ✅ Current | ⚠️ Legacy support |
+| **Windows 10 Support** | ✅ Works | ✅ Optimized |
+| **Windows 11 Support** | ✅ Optimized | ✅ Works |
+
+### Migration Path
+
+If you're currently using the **Legacy WinForms version**, see [MIGRATION_NOTES.md](https://github.com/mta1124-1629472/ViVeTool-GUI/blob/master/MIGRATION_NOTES.md) for detailed migration instructions to the new WPF version.
 
 ## Feature Feed System
 
@@ -136,7 +185,6 @@ ViVeTool-GUI/
 ├── lib/                        # External dependencies
 ├── images/                     # UI screenshots and icons
 ├── MIGRATION_NOTES.md          # WPF migration guide
-├── LOCALIZE.md                 # Translation guidelines
 └── building.md                 # Build instructions
 ```
 
