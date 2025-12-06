@@ -143,7 +143,7 @@ Namespace Services
                 RaiseEvent ProgressChanged(Me, New ScanProgressEventArgs(progress, $"Downloading symbols from {directory}..."))
 
                 Try
-                    Dim result = Await RunProcessAsync(debuggerPath, $"/r ""{directory}"" /oc ""{symbolPath}"" /cn", AppDomain.CurrentDomain.BaseDirectory, cancellationToken)
+                    Dim result = Await RunProcessAsync(debuggerPath, $"/r ""{directory}"" /s srv* /oc ""{symbolPath}"" /cn", AppDomain.CurrentDomain.BaseDirectory, cancellationToken)
                     If Not result.Success AndAlso Not cancellationToken.IsCancellationRequested Then
                         RaiseEvent OutputReceived(Me, $"Warning: Error downloading symbols from {directory}: {result.ErrorMessage}")
                     End If
