@@ -82,6 +82,7 @@
   <ItemGroup>
     <Compile Include="ApplicationEvents.vb" />
     <Compile Include="CrashReporter.vb" />
+    <Compile Include="DialogHelper.vb" />
     <Compile Include="GlobalSuppressions.vb" />
     <Compile Include="ScannerUI.vb">
       <SubType>Form</SubType>
@@ -90,6 +91,7 @@
       <DependentUpon>ScannerUI.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="ThemeHelper.vb" />
     <EmbeddedResource Include="My Project\licenses.licx" />
     <EmbeddedResource Include="ScannerUI.resx">
       <DependentUpon>ScannerUI.vb</DependentUpon>

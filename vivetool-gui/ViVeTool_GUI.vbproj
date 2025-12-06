@@ -119,6 +119,7 @@
     </Compile>
     <Compile Include="ApplicationEvents.vb" />
     <Compile Include="CrashReporter.vb" />
+    <Compile Include="DialogHelper.vb" />
     <Compile Include="GlobalSuppressions.vb" />
     <Compile Include="GUI.vb">
       <SubType>Form</SubType>
@@ -133,6 +134,7 @@
     <Compile Include="SetManual.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="ThemeHelper.vb" />
     <EmbeddedResource Include="AboutAndSettings.resx">
       <DependentUpon>AboutAndSettings.vb</DependentUpon>
     </EmbeddedResource>

@@ -161,37 +161,7 @@ Public Class ScannerUI
                            End Sub)
                 End If
             Catch ex As Exception
-                'Create a Button that on Click, copies the Exception Text
-                Dim CopyExAndClose As New RadTaskDialogButton With {
-                    .Text = "Copy Exception and Close"
-                }
-                AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                      Try
-                                                                          My.Computer.Clipboard.SetText(ex.ToString)
-                                                                      Catch clipex As Exception
-                                                                          'Do nothing
-                                                                      End Try
-                                                                  End Sub)
-
-                Dim RTD As New RadTaskDialogPage With {
-                        .Caption = " An Exception occurred",
-                        .Heading = "An Exception occurred",
-                        .Text = "An Exception occurred while trying to write a test file to " & RTB_SymbolPath.Text & vbNewLine & vbNewLine & "Please make sure that the application has write access to the folder, and that the folder isn't write protected.",
-                        .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                    }
-
-                'Add the Exception Text to the Expander
-                RTD.Expander.Text = ex.Message
-
-                'Set the Text for the "Collapse Info" and "More Info" Buttons
-                RTD.Expander.ExpandedButtonText = "Collapse Exception"
-                RTD.Expander.CollapsedButtonText = "Show Exception"
-
-                'Add the Button to the Message Box
-                RTD.CommandAreaButtons.Add(CopyExAndClose)
-
-                'Show the Message Box
-                RadTaskDialog.ShowDialog(RTD)
+                DialogHelper.ShowExceptionDialog(" An Exception occurred", "An Exception occurred", ex.Message, "An Exception occurred while trying to write a test file to " & RTB_SymbolPath.Text & vbNewLine & vbNewLine & "Please make sure that the application has write access to the folder, and that the folder isn't write protected.")
 
                 Invoke(Sub()
                            RPBE_StatusProgressBar.Value1 = 0
@@ -202,14 +172,7 @@ Public Class ScannerUI
                        End Sub)
             End Try
         Else
-            Dim RTD As New RadTaskDialogPage With {
-                        .Caption = " An Error occurred",
-                        .Heading = "An Error occurred",
-                        .Text = "An Error occurred while trying to write a test file to the symbol folder." & vbNewLine & vbNewLine & "A symbol folder must be specified to download Program Debug Database files into.",
-                        .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                    }
-            'Show the Message Box
-            RadTaskDialog.ShowDialog(RTD)
+            DialogHelper.ShowErrorDialog(" An Error occurred", "An Error occurred", "An Error occurred while trying to write a test file to the symbol folder." & vbNewLine & vbNewLine & "A symbol folder must be specified to download Program Debug Database files into.", RadTaskDialogIcon.ShieldErrorRedBar)
 
             Invoke(Sub()
                        RPBE_StatusProgressBar.Value1 = 0
@@ -537,46 +500,9 @@ Public Class ScannerUI
     Private Sub RB_OA_CopyFeaturesTXT_Click(sender As Object, e As EventArgs) Handles RB_OA_CopyFeaturesTXT.Click
         Try
             IO.File.Copy(My.Settings.SymbolPath & "\" & BuildNumber & ".txt", My.Computer.FileSystem.SpecialDirectories.Desktop & "\" & BuildNumber & ".txt")
-            Dim RTD As New RadTaskDialogPage With {
-                       .Caption = " File Copy successful",
-                       .Heading = BuildNumber & ".txt was successfully copied to your desktop.",
-                       .Icon = RadTaskDialogIcon.ShieldSuccessGreenBar
-                   }
-
-            'Show the Message Box
-            RadTaskDialog.ShowDialog(RTD)
+            DialogHelper.ShowSuccessDialog(" File Copy successful", BuildNumber & ".txt was successfully copied to your desktop.")
         Catch ex As Exception
-            'Create a Button that on Click, copies the Exception Text
-            Dim CopyExAndClose As New RadTaskDialogButton With {
-                    .Text = "Copy Exception and Close"
-                }
-            AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                  Try
-                                                                      My.Computer.Clipboard.SetText(ex.ToString)
-                                                                  Catch clipex As Exception
-                                                                      'Do nothing
-                                                                  End Try
-                                                              End Sub)
-
-            Dim RTD As New RadTaskDialogPage With {
-                        .Caption = " An Exception occurred",
-                        .Heading = "An Exception occurred",
-                        .Text = "An Exception occurred while trying to copy " & BuildNumber & ".txt to your desktop.",
-                        .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                    }
-
-            'Add the Exception Text to the Expander
-            RTD.Expander.Text = ex.Message
-
-            'Set the Text for the "Collapse Info" and "More Info" Buttons
-            RTD.Expander.ExpandedButtonText = "Collapse Exception"
-            RTD.Expander.CollapsedButtonText = "Show Exception"
-
-            'Add the Button to the Message Box
-            RTD.CommandAreaButtons.Add(CopyExAndClose)
-
-            'Show the Message Box
-            RadTaskDialog.ShowDialog(RTD)
+            DialogHelper.ShowExceptionDialog(" An Exception occurred", "An Exception occurred", ex.Message, "An Exception occurred while trying to copy " & BuildNumber & ".txt to your desktop.")
         End Try
     End Sub
 
@@ -588,46 +514,9 @@ Public Class ScannerUI
     Private Sub RB_OA_DeleteSymbolPath_Click(sender As Object, e As EventArgs) Handles RB_OA_DeleteSymbolPath.Click
         Try
             IO.Directory.Delete(My.Settings.SymbolPath, True)
-            Dim RTD As New RadTaskDialogPage With {
-                       .Caption = " Symbol Folder deleted successfully",
-                       .Heading = My.Settings.SymbolPath & "was successfully deleted.",
-                       .Icon = RadTaskDialogIcon.ShieldSuccessGreenBar
-                   }
-
-            'Show the Message Box
-            RadTaskDialog.ShowDialog(RTD)
+            DialogHelper.ShowSuccessDialog(" Symbol Folder deleted successfully", My.Settings.SymbolPath & "was successfully deleted.")
         Catch ex As Exception
-            'Create a Button that on Click, copies the Exception Text
-            Dim CopyExAndClose As New RadTaskDialogButton With {
-                    .Text = "Copy Exception and Close"
-                }
-            AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                  Try
-                                                                      My.Computer.Clipboard.SetText(ex.ToString)
-                                                                  Catch clipex As Exception
-                                                                      'Do nothing
-                                                                  End Try
-                                                              End Sub)
-
-            Dim RTD As New RadTaskDialogPage With {
-                        .Caption = " An Exception occurred",
-                        .Heading = "An Exception occurred",
-                        .Text = "An Exception occurred while trying to delete " & My.Settings.SymbolPath,
-                        .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                    }
-
-            'Add the Exception Text to the Expander
-            RTD.Expander.Text = ex.Message
-
-            'Set the Text for the "Collapse Info" and "More Info" Buttons
-            RTD.Expander.ExpandedButtonText = "Collapse Exception"
-            RTD.Expander.CollapsedButtonText = "Show Exception"
-
-            'Add the Button to the Message Box
-            RTD.CommandAreaButtons.Add(CopyExAndClose)
-
-            'Show the Message Box
-            RadTaskDialog.ShowDialog(RTD)
+            DialogHelper.ShowExceptionDialog(" An Exception occurred", "An Exception occurred", ex.Message, "An Exception occurred while trying to delete " & My.Settings.SymbolPath)
         End Try
     End Sub
 
@@ -661,15 +550,9 @@ Public Class ScannerUI
     ''' <param name="args">StateChanging EventArgs</param>
     Private Sub RTB_ThemeToggle_ToggleStateChanging(sender As Object, args As StateChangingEventArgs) Handles RTB_ThemeToggle.ToggleStateChanging
         If args.NewValue = Telerik.WinControls.Enumerations.ToggleState.On Then
-            ThemeResolutionService.ApplicationThemeName = "FluentDark"
-            RTB_ThemeToggle.Text = "Dark Theme"
-            RTB_ThemeToggle.Image = My.Resources.icons8_moon_and_stars_24
-            My.Settings.DarkMode = True
+            ThemeHelper.ApplyDarkTheme(RTB_ThemeToggle, My.Resources.icons8_moon_and_stars_24)
         Else
-            ThemeResolutionService.ApplicationThemeName = "Fluent"
-            RTB_ThemeToggle.Text = "Light Theme"
-            RTB_ThemeToggle.Image = My.Resources.icons8_sun_24
-            My.Settings.DarkMode = False
+            ThemeHelper.ApplyLightTheme(RTB_ThemeToggle, My.Resources.icons8_sun_24)
         End If
     End Sub
 
@@ -680,18 +563,9 @@ Public Class ScannerUI
     ''' <param name="args">StateChanged EventArgs</param>
     Private Sub RTB_UseSystemTheme_ToggleStateChanged(sender As Object, args As StateChangedEventArgs) Handles RTB_UseSystemTheme.ToggleStateChanged
         If args.ToggleState = Telerik.WinControls.Enumerations.ToggleState.On Then
-            My.Settings.UseSystemTheme = True
-            Dim AppsUseLightTheme_CurrentUserDwordKey As Microsoft.Win32.RegistryKey = My.Computer.Registry.CurrentUser.OpenSubKey("Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
-            Dim AppsUseLightTheme_CurrentUserDwordValue As Object = AppsUseLightTheme_CurrentUserDwordKey.GetValue("SystemUsesLightTheme")
-            If CInt(AppsUseLightTheme_CurrentUserDwordValue) = 0 Then
-                RTB_ThemeToggle.ToggleState = Enumerations.ToggleState.On
-                RTB_ThemeToggle.Image = My.Resources.icons8_moon_and_stars_24
-            Else
-                RTB_ThemeToggle.ToggleState = Enumerations.ToggleState.Off
-                RTB_ThemeToggle.Image = My.Resources.icons8_sun_24
-            End If
+            ThemeHelper.ApplySystemTheme(RTB_ThemeToggle, My.Resources.icons8_moon_and_stars_24, My.Resources.icons8_sun_24)
         Else
-            My.Settings.UseSystemTheme = False
+            ThemeHelper.DisableSystemTheme()
         End If
     End Sub
 End Class

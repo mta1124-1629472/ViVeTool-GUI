@@ -193,53 +193,9 @@ Public Class GUI
             Next
 
         Catch webex As WebException
-            Dim CopyExAndClose As New RadTaskDialogButton With {
-                .Text = "Copy Exception and Close"
-            }
-            AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                  Try
-                                                                      My.Computer.Clipboard.SetText(DirectCast(webex.Response, HttpWebResponse).StatusDescription)
-                                                                  Catch clipex As Exception
-                                                                      'Do nothing
-                                                                  End Try
-                                                              End Sub)
-
-            Dim RTD As New RadTaskDialogPage With {
-                    .Caption = " A Network Exception occurred",
-                    .Heading = "A Network Exception occurred. Your IP may have been temporarily rate limited by the GitHub API for an hour.",
-                    .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                }
-            Try
-                RTD.Expander.Text = "GitHub API Response: " & DirectCast(webex.Response, HttpWebResponse).StatusDescription
-            Catch ex As Exception
-                RTD.Expander.Text = webex.ToString
-            End Try
-            RTD.Expander.ExpandedButtonText = "Collapse Exception"
-            RTD.Expander.CollapsedButtonText = "Show Exception"
-            RTD.CommandAreaButtons.Add(CopyExAndClose)
-            RadTaskDialog.ShowDialog(RTD)
+            DialogHelper.ShowNetworkExceptionDialog(webex)
         Catch ex As Exception
-            Dim CopyExAndClose As New RadTaskDialogButton With {
-                .Text = "Copy Exception and Close"
-            }
-            AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                  Try
-                                                                      My.Computer.Clipboard.SetText(ex.ToString)
-                                                                  Catch clipex As Exception
-                                                                      'Do nothing
-                                                                  End Try
-                                                              End Sub)
-
-            Dim RTD As New RadTaskDialogPage With {
-                    .Caption = " An Exception occurred",
-                    .Heading = "An unknown Exception occurred.",
-                    .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                }
-            RTD.Expander.Text = ex.ToString
-            RTD.Expander.ExpandedButtonText = "Collapse Exception"
-            RTD.Expander.CollapsedButtonText = "Show Exception"
-            RTD.CommandAreaButtons.Add(CopyExAndClose)
-            RadTaskDialog.ShowDialog(RTD)
+            DialogHelper.ShowUnknownExceptionDialog(ex)
         End Try
 #End Region
 #Region "2. Get the features folder File Contents"
@@ -302,53 +258,9 @@ Public Class GUI
                 Invoke(Sub() RDDL_Build.SelectedItem = RDDL_Build.Items.Item(1))
             End If
         Catch webex As WebException
-            Dim CopyExAndClose As New RadTaskDialogButton With {
-                .Text = "Copy Exception and Close"
-            }
-            AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                  Try
-                                                                      My.Computer.Clipboard.SetText(DirectCast(webex.Response, HttpWebResponse).StatusDescription)
-                                                                  Catch clipex As Exception
-                                                                      'Do nothing
-                                                                  End Try
-                                                              End Sub)
-
-            Dim RTD As New RadTaskDialogPage With {
-                    .Caption = " A Network Exception occurred",
-                    .Heading = "A Network Exception occurred. Your IP may have been temporarily rate limited by the GitHub API for an hour.",
-                    .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                }
-            Try
-                RTD.Expander.Text = "GitHub API Response: " & DirectCast(webex.Response, HttpWebResponse).StatusDescription
-            Catch ex As Exception
-                RTD.Expander.Text = webex.ToString
-            End Try
-            RTD.Expander.ExpandedButtonText = "Collapse Exception"
-            RTD.Expander.CollapsedButtonText = "Show Exception"
-            RTD.CommandAreaButtons.Add(CopyExAndClose)
-            RadTaskDialog.ShowDialog(RTD)
+            DialogHelper.ShowNetworkExceptionDialog(webex)
         Catch ex As Exception
-            Dim CopyExAndClose As New RadTaskDialogButton With {
-                .Text = "Copy Exception and Close"
-            }
-            AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                  Try
-                                                                      My.Computer.Clipboard.SetText(ex.ToString)
-                                                                  Catch clipex As Exception
-                                                                      'Do nothing
-                                                                  End Try
-                                                              End Sub)
-
-            Dim RTD As New RadTaskDialogPage With {
-                    .Caption = " An Exception occurred",
-                    .Heading = "An unknown Exception occurred.",
-                    .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                }
-            RTD.Expander.Text = ex.ToString
-            RTD.Expander.ExpandedButtonText = "Collapse Exception"
-            RTD.Expander.CollapsedButtonText = "Show Exception"
-            RTD.CommandAreaButtons.Add(CopyExAndClose)
-            RadTaskDialog.ShowDialog(RTD)
+            DialogHelper.ShowUnknownExceptionDialog(ex)
         End Try
 #End Region
     End Sub
@@ -507,38 +419,7 @@ Public Class GUI
             Catch ex As Exception
                 Invoke(Sub()
                            'Catch Any Exception that may occur
-
-                           'Create a Button that on Click, copies the Exception Text
-                           Dim CopyExAndClose As New RadTaskDialogButton With {
-                                .Text = "Copy Exception and Close"
-                            }
-                           AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                                 Try
-                                                                                     My.Computer.Clipboard.SetText(ex.ToString)
-                                                                                 Catch clipex As Exception
-                                                                                     'Do nothing
-                                                                                 End Try
-                                                                             End Sub)
-
-                           'Fancy Message Box
-                           Dim RTD As New RadTaskDialogPage With {
-                                    .Caption = " An Exception occurred",
-                                    .Heading = "An unknown Exception occurred.",
-                                    .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                                }
-
-                           'Add the Exception Text to the Expander
-                           RTD.Expander.Text = ex.ToString
-
-                           'Set the Text for the "Collapse Info" and "More Info" Buttons
-                           RTD.Expander.ExpandedButtonText = "Collapse Exception"
-                           RTD.Expander.CollapsedButtonText = "Show Exception"
-
-                           'Add the Button to the Message Box
-                           RTD.CommandAreaButtons.Add(CopyExAndClose)
-
-                           'Show the Message Box
-                           RadTaskDialog.ShowDialog(RTD)
+                           DialogHelper.ShowUnknownExceptionDialog(ex)
 
                            'Clear the selection
                            RDDL_Build.SelectedIndex = -1
@@ -799,52 +680,11 @@ Public Class GUI
                 RGV_MainGridView.CurrentRow.Cells.Item(2).Value = FeatureEnabledState.ToString
 
                 'Fancy Message Box
-                Dim RTD As New RadTaskDialogPage With {
-                    .Caption = " Success",
-                    .Heading = "Successfully set Feature " & RGV_MainGridView.SelectedRows.Item(0).Cells(0).Value.ToString & " to " & FeatureEnabledState.ToString,
-                    .Icon = RadTaskDialogIcon.ShieldSuccessGreenBar
-                }
-
-                'Add a Close Button instead of a OK Button
-                RTD.CommandAreaButtons.Add(RadTaskDialogButton.Close)
-
-                'Show the Message Box
-                RadTaskDialog.ShowDialog(RTD)
+                DialogHelper.ShowSuccessDialog(" Success", "Successfully set Feature " & RGV_MainGridView.SelectedRows.Item(0).Cells(0).Value.ToString & " to " & FeatureEnabledState.ToString)
             End If
         Catch ex As Exception
             'Catch Any Exception that may occur
-
-            'Create a Button that on Click, copies the Exception Text
-            Dim CopyExAndClose As New RadTaskDialogButton With {
-                .Text = "Copy Exception and Close"
-            }
-            AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                  Try
-                                                                      My.Computer.Clipboard.SetText(ex.ToString)
-                                                                  Catch clipex As Exception
-                                                                      'Do nothing
-                                                                  End Try
-                                                              End Sub)
-
-            'Fancy Message Box
-            Dim RTD As New RadTaskDialogPage With {
-                    .Caption = " An Exception occurred",
-                    .Heading = "An unknown Exception occurred.",
-                    .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                }
-
-            'Add the Exception Text to the Expander
-            RTD.Expander.Text = ex.ToString
-
-            'Set the Text for the "Collapse Info" and "More Info" Buttons
-            RTD.Expander.ExpandedButtonText = "Collapse Exception"
-            RTD.Expander.CollapsedButtonText = "Show Exception"
-
-            'Add the Button to the Message Box
-            RTD.CommandAreaButtons.Add(CopyExAndClose)
-
-            'Show the Message Box
-            RadTaskDialog.ShowDialog(RTD)
+            DialogHelper.ShowUnknownExceptionDialog(ex)
         End Try
     End Sub
 
