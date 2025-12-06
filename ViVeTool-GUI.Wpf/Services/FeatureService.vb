@@ -27,6 +27,29 @@ Namespace Services
     ''' Uses Albacore.ViVe.RtlFeatureManager to query and modify Windows features.
     ''' </summary>
     Public Class FeatureService
+        ' Constants for FeatureConfiguration settings
+        ' EnabledStateOptions = 1: Standard option for feature state updates
+        Private Const EnabledStateOptionsValue As Integer = 1
+        ' Group = 4: Standard group value for user-configured features
+        Private Const GroupValue As Integer = 4
+        ' Variant values (0 = default/no variant)
+        Private Const VariantValue As Integer = 0
+        Private Const VariantPayloadValue As Integer = 0
+        Private Const VariantPayloadKindValue As Integer = 0
+
+        ''' <summary>
+        ''' Gets the last error message from a failed operation.
+        ''' </summary>
+        Private _lastErrorMessage As String = String.Empty
+
+        ''' <summary>
+        ''' Gets the last error message from a failed operation.
+        ''' </summary>
+        Public ReadOnly Property LastErrorMessage As String
+            Get
+                Return _lastErrorMessage
+            End Get
+        End Property
         ''' <summary>
         ''' Gets all available features from the system by querying RtlFeatureManager.
         ''' </summary>
@@ -153,15 +176,15 @@ Namespace Services
         ''' <returns>True if successful, false otherwise.</returns>
         Private Function SetFeatureConfiguration(featureId As UInteger, enabledState As FeatureEnabledState) As Boolean
             Try
-                ' Create the feature configuration
+                ' Create the feature configuration using defined constants
                 Dim config As New FeatureConfiguration() With {
                     .FeatureId = featureId,
                     .EnabledState = enabledState,
-                    .EnabledStateOptions = 1,
-                    .Group = 4,
-                    .Variant = 0,
-                    .VariantPayload = 0,
-                    .VariantPayloadKind = 0,
+                    .EnabledStateOptions = EnabledStateOptionsValue,
+                    .Group = GroupValue,
+                    .Variant = VariantValue,
+                    .VariantPayload = VariantPayloadValue,
+                    .VariantPayloadKind = VariantPayloadKindValue,
                     .Action = FeatureConfigurationAction.UpdateEnabledState
                 }
 
@@ -176,25 +199,11 @@ Namespace Services
 
                 Return bootResult AndAlso (liveResult = 0)
             Catch ex As Exception
-                ' Log or handle the exception as needed
-                ' For now, we return false to indicate failure
+                ' Store error message for debugging
+                _lastErrorMessage = ex.Message
                 Return False
             End Try
         End Function
-
-        ''' <summary>
-        ''' Gets the last error message from a failed operation.
-        ''' </summary>
-        Private _lastErrorMessage As String = String.Empty
-
-        ''' <summary>
-        ''' Gets the last error message from a failed operation.
-        ''' </summary>
-        Public ReadOnly Property LastErrorMessage As String
-            Get
-                Return _lastErrorMessage
-            End Get
-        End Property
 
         ''' <summary>
         ''' Queries a single feature's current configuration.
@@ -211,25 +220,27 @@ Namespace Services
         Private Function GetFeatureCore(featureId As UInteger) As FeatureItem
             Try
                 Dim config = RtlFeatureManager.QueryFeatureConfiguration(featureId, FeatureConfigurationSection.Runtime)
-                If config IsNot Nothing Then
-                    Dim stateStr As String = config.EnabledState.ToString()
-                    Dim isEnabled As Boolean = (config.EnabledState = FeatureEnabledState.Enabled)
+                
+                ' Check for null explicitly instead of catching NullReferenceException
+                If config Is Nothing Then
+                    ' Feature not configured, return default state
                     Return New FeatureItem(
-                        CInt(config.FeatureId),
-                        $"Feature {config.FeatureId}",
-                        stateStr,
-                        isEnabled,
-                        $"Group: {config.Group}, Variant: {config.Variant}"
+                        CInt(featureId),
+                        $"Feature {featureId}",
+                        "Default",
+                        False,
+                        "Not configured"
                     )
                 End If
-            Catch ex As NullReferenceException
-                ' Feature not configured, return default state
+
+                Dim stateStr As String = config.EnabledState.ToString()
+                Dim isEnabled As Boolean = (config.EnabledState = FeatureEnabledState.Enabled)
                 Return New FeatureItem(
-                    CInt(featureId),
-                    $"Feature {featureId}",
-                    "Default",
-                    False,
-                    "Not configured"
+                    CInt(config.FeatureId),
+                    $"Feature {config.FeatureId}",
+                    stateStr,
+                    isEnabled,
+                    $"Group: {config.Group}, Variant: {config.Variant}"
                 )
             Catch ex As Exception
                 _lastErrorMessage = ex.Message
