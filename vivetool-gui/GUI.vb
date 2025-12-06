@@ -255,7 +255,17 @@ Public Class GUI
 
             'Auto-load the newest Build if it is Enabled in the Settings
             If My.Settings.AutoLoad Then
-                Invoke(Sub() RDDL_Build.SelectedItem = RDDL_Build.Items.Item(1))
+                Invoke(Sub()
+                           Dim count = RDDL_Build.Items.Count
+                           If count > 1 Then
+                               ' Assuming index 0 = "Load manually...", select first build
+                               RDDL_Build.SelectedIndex = 1
+                           ElseIf count = 1 Then
+                               ' No builds available; skip auto-load
+                               RDDL_Build.SelectedIndex = -1
+                               RLE_StatusLabel.Text = "No builds available. Load manually or try again."
+                           End If
+                       End Sub)
             End If
         Catch webex As WebException
             DialogHelper.ShowNetworkExceptionDialog(webex)
