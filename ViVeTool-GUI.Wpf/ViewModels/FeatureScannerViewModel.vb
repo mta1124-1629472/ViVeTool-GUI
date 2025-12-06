@@ -297,14 +297,6 @@ Namespace ViewModels
         End Function
 
         Private Sub ExecuteBrowseSymbolPath()
-            Dim dialog = New Microsoft.Win32.SaveFileDialog() With {
-                .Title = "Select Symbol Storage Folder",
-                .FileName = "Select Folder",
-                .Filter = "Folder|*.",
-                .CheckFileExists = False,
-                .CheckPathExists = True
-            }
-
             ' Use FolderBrowserDialog via Windows Forms interop
             Dim folderDialog As New System.Windows.Forms.FolderBrowserDialog() With {
                 .Description = "Select a folder to store downloaded debug symbols (5-8GB space required)",

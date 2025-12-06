@@ -120,8 +120,17 @@ Namespace Services
         Public Async Function DownloadSymbolsAsync(debuggerPath As String, symbolPath As String, cancellationToken As Threading.CancellationToken) As Task(Of ScannerResult)
             _cancellationRequested = False
 
-            Dim directories = New String() {"C:\Windows", "C:\Program Files", "C:\Program Files (x86)"}
-            Dim totalDirectories = directories.Length
+            ' Use environment variables for system paths (portability across Windows configurations)
+            Dim systemRoot = Environment.GetFolderPath(Environment.SpecialFolder.Windows)
+            Dim programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)
+            Dim programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+
+            ' Build list of directories to scan (filter out empty paths)
+            Dim directories = New List(Of String)()
+            If Not String.IsNullOrEmpty(systemRoot) Then directories.Add(systemRoot)
+            If Not String.IsNullOrEmpty(programFiles) Then directories.Add(programFiles)
+            If Not String.IsNullOrEmpty(programFilesX86) AndAlso programFilesX86 <> programFiles Then directories.Add(programFilesX86)
+            Dim totalDirectories = directories.Count
             Dim currentIndex = 0
 
             For Each directory In directories
@@ -166,6 +175,9 @@ Namespace Services
 
             Dim retryCount = 0
             Const MaxRetries = 3
+            ' Exit codes that may indicate transient failures and are worth retrying
+            ' mach2 exit code 1 typically indicates a recoverable error
+            Dim retryableExitCodes = New Integer() {1}
 
             While retryCount < MaxRetries
                 If cancellationToken.IsCancellationRequested OrElse _cancellationRequested Then
@@ -183,14 +195,16 @@ Namespace Services
                         Else
                             Return ScannerResult.CreateFailure($"Scan completed but output file not found: {outputFile}")
                         End If
-                    ElseIf result.ExitCode >= 1 Then
+                    ElseIf retryableExitCodes.Contains(result.ExitCode) Then
+                        ' Retry only for known transient exit codes
                         retryCount += 1
                         RaiseEvent OutputReceived(Me, $"mach2 returned exit code {result.ExitCode}. Retry {retryCount}/{MaxRetries}...")
                         If retryCount < MaxRetries Then
                             Await Task.Delay(1000, cancellationToken)
                         End If
                     Else
-                        Return result
+                        ' Non-retryable exit code - return failure immediately
+                        Return ScannerResult.CreateFailure($"mach2 failed with exit code {result.ExitCode}. {result.ErrorMessage}")
                     End If
                 Catch ex As OperationCanceledException
                     Return ScannerResult.CreateCancelled()
