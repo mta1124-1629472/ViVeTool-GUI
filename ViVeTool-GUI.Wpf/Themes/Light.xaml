@@ -4,6 +4,7 @@
     <!-- Light Theme Colors -->
     <Color x:Key="PrimaryBackgroundColor">#FFFFFF</Color>
     <Color x:Key="SecondaryBackgroundColor">#F5F5F5</Color>
+    <Color x:Key="TertiaryBackgroundColor">#ECECEC</Color>
     <Color x:Key="PrimaryForegroundColor">#1A1A1A</Color>
     <Color x:Key="SecondaryForegroundColor">#666666</Color>
     <Color x:Key="AccentColor">#0078D4</Color>
@@ -17,6 +18,7 @@
     <!-- Light Theme Brushes -->
     <SolidColorBrush x:Key="PrimaryBackgroundBrush" Color="{StaticResource PrimaryBackgroundColor}" />
     <SolidColorBrush x:Key="SecondaryBackgroundBrush" Color="{StaticResource SecondaryBackgroundColor}" />
+    <SolidColorBrush x:Key="TertiaryBackgroundBrush" Color="{StaticResource TertiaryBackgroundColor}" />
     <SolidColorBrush x:Key="PrimaryForegroundBrush" Color="{StaticResource PrimaryForegroundColor}" />
     <SolidColorBrush x:Key="SecondaryForegroundBrush" Color="{StaticResource SecondaryForegroundColor}" />
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />

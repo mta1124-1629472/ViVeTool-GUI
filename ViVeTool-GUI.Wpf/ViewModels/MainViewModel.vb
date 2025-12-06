@@ -32,9 +32,13 @@ Namespace ViewModels
     Partial Public Class MainViewModel
         Inherits ObservableObject
 
+        ' Constants
+        Private Const FeatureScannerExecutable As String = "ViVeTool_GUI.FeatureScanner.exe"
+
         Private ReadOnly _featureService As FeatureService
         Private ReadOnly _gitHubService As GitHubService
         Private ReadOnly _themeService As ThemeService
+        Private ReadOnly _publishService As PublishService
 
         Private _features As ObservableCollection(Of FeatureItem)
         Private _featuresView As ICollectionView
@@ -45,6 +49,19 @@ Namespace ViewModels
         Private _statusMessage As String = "Ready"
         Private _isLoading As Boolean
         Private _currentThemeName As String = "Light"
+
+        ' Publish-related fields
+        Private _publishBuildNumber As String = String.Empty
+        Private _publishArtifactPath As String = String.Empty
+        Private _publishArtifactUrl As String = String.Empty
+        Private _publishFormat As String = "csv"
+        Private _publishGitHubToken As String = String.Empty
+        Private _publishStatus As PublishStatus = PublishStatus.Idle
+        Private _publishErrorMessage As String = String.Empty
+        Private _isMaintainerOnlyError As Boolean
+        Private _isPublishing As Boolean
+        Private _canShowPublishPanel As Boolean
+        Private _availableFormats As ObservableCollection(Of String)
 
         ''' <summary>
         ''' Gets or sets the collection of features.
@@ -160,6 +177,153 @@ Namespace ViewModels
             End Set
         End Property
 
+#Region "Publish Properties"
+
+        ''' <summary>
+        ''' Gets or sets the build number for publishing.
+        ''' </summary>
+        Public Property PublishBuildNumber As String
+            Get
+                Return _publishBuildNumber
+            End Get
+            Set(value As String)
+                If SetProperty(_publishBuildNumber, value) Then
+                    PublishFeatureListCommand.NotifyCanExecuteChanged()
+                End If
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets or sets the artifact path for publishing.
+        ''' </summary>
+        Public Property PublishArtifactPath As String
+            Get
+                Return _publishArtifactPath
+            End Get
+            Set(value As String)
+                If SetProperty(_publishArtifactPath, value) Then
+                    PublishFeatureListCommand.NotifyCanExecuteChanged()
+                End If
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets or sets the artifact URL for publishing.
+        ''' </summary>
+        Public Property PublishArtifactUrl As String
+            Get
+                Return _publishArtifactUrl
+            End Get
+            Set(value As String)
+                If SetProperty(_publishArtifactUrl, value) Then
+                    PublishFeatureListCommand.NotifyCanExecuteChanged()
+                End If
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets or sets the output format for publishing (csv or json).
+        ''' </summary>
+        Public Property PublishFormat As String
+            Get
+                Return _publishFormat
+            End Get
+            Set(value As String)
+                SetProperty(_publishFormat, value)
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets or sets the GitHub token for workflow dispatch.
+        ''' </summary>
+        Public Property PublishGitHubToken As String
+            Get
+                Return _publishGitHubToken
+            End Get
+            Set(value As String)
+                If SetProperty(_publishGitHubToken, value) Then
+                    PublishFeatureListCommand.NotifyCanExecuteChanged()
+                End If
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets or sets the current publish status.
+        ''' </summary>
+        Public Property PublishStatus As PublishStatus
+            Get
+                Return _publishStatus
+            End Get
+            Set(value As PublishStatus)
+                SetProperty(_publishStatus, value)
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets or sets the publish error message.
+        ''' </summary>
+        Public Property PublishErrorMessage As String
+            Get
+                Return _publishErrorMessage
+            End Get
+            Set(value As String)
+                SetProperty(_publishErrorMessage, value)
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets or sets whether the error is a maintainer-only access error.
+        ''' </summary>
+        Public Property IsMaintainerOnlyError As Boolean
+            Get
+                Return _isMaintainerOnlyError
+            End Get
+            Set(value As Boolean)
+                SetProperty(_isMaintainerOnlyError, value)
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets or sets whether a publish operation is in progress.
+        ''' </summary>
+        Public Property IsPublishing As Boolean
+            Get
+                Return _isPublishing
+            End Get
+            Set(value As Boolean)
+                If SetProperty(_isPublishing, value) Then
+                    PublishFeatureListCommand.NotifyCanExecuteChanged()
+                    LaunchFeatureScannerCommand.NotifyCanExecuteChanged()
+                End If
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets or sets whether the publish panel should be shown (after successful scan).
+        ''' </summary>
+        Public Property CanShowPublishPanel As Boolean
+            Get
+                Return _canShowPublishPanel
+            End Get
+            Set(value As Boolean)
+                SetProperty(_canShowPublishPanel, value)
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Gets the available output formats.
+        ''' </summary>
+        Public Property AvailableFormats As ObservableCollection(Of String)
+            Get
+                Return _availableFormats
+            End Get
+            Set(value As ObservableCollection(Of String))
+                SetProperty(_availableFormats, value)
+            End Set
+        End Property
+
+#End Region
+
         ''' <summary>
         ''' Command to apply/enable a feature.
         ''' </summary>
@@ -186,15 +350,28 @@ Namespace ViewModels
         Public ReadOnly Property LoadFeaturesCommand As IAsyncRelayCommand
 
         ''' <summary>
+        ''' Command to launch the Feature Scanner application.
+        ''' </summary>
+        Public ReadOnly Property LaunchFeatureScannerCommand As IRelayCommand
+
+        ''' <summary>
+        ''' Command to publish feature list via GitHub Actions.
+        ''' </summary>
+        Public ReadOnly Property PublishFeatureListCommand As IAsyncRelayCommand
+
+        ''' <summary>
         ''' Creates a new instance of MainViewModel.
         ''' </summary>
         Public Sub New()
             _featureService = New FeatureService()
             _gitHubService = New GitHubService()
             _themeService = ThemeService.Instance
+            _publishService = New PublishService()
 
             _features = New ObservableCollection(Of FeatureItem)()
             _availableBuilds = New ObservableCollection(Of String)()
+            _availableFormats = New ObservableCollection(Of String) From {"csv", "json"}
+            _publishFormat = "csv"
 
             ' Initialize the collection view for filtering
             _featuresView = CollectionViewSource.GetDefaultView(_features)
@@ -206,6 +383,8 @@ Namespace ViewModels
             RefreshBuildsCommand = New AsyncRelayCommand(AddressOf ExecuteRefreshBuildsAsync, AddressOf CanExecuteRefreshBuilds)
             ToggleThemeCommand = New RelayCommand(AddressOf ExecuteToggleTheme)
             LoadFeaturesCommand = New AsyncRelayCommand(AddressOf ExecuteLoadFeaturesAsync)
+            LaunchFeatureScannerCommand = New RelayCommand(AddressOf ExecuteLaunchFeatureScanner, AddressOf CanExecuteLaunchFeatureScanner)
+            PublishFeatureListCommand = New AsyncRelayCommand(AddressOf ExecutePublishFeatureListAsync, AddressOf CanExecutePublishFeatureList)
 
             ' Set initial theme name
             _currentThemeName = _themeService.CurrentTheme
@@ -368,5 +547,123 @@ Namespace ViewModels
             Await ExecuteLoadFeaturesAsync()
             Await ExecuteRefreshBuildsAsync()
         End Function
+
+#Region "Publish Methods"
+
+        ''' <summary>
+        ''' Determines if the launch feature scanner command can execute.
+        ''' </summary>
+        Private Function CanExecuteLaunchFeatureScanner() As Boolean
+            Return Not IsPublishing AndAlso Not IsLoading
+        End Function
+
+        ''' <summary>
+        ''' Executes the launch feature scanner command.
+        ''' </summary>
+        Private Sub ExecuteLaunchFeatureScanner()
+            Try
+                ' Try to find the Feature Scanner executable in the application directory
+                Dim appDirectory = AppDomain.CurrentDomain.BaseDirectory
+                Dim scannerPath = System.IO.Path.Combine(appDirectory, FeatureScannerExecutable)
+
+                If Not System.IO.File.Exists(scannerPath) Then
+                    ' Try alternative path (development scenario)
+                    Dim parentDir = System.IO.Directory.GetParent(appDirectory)?.FullName
+                    If parentDir IsNot Nothing Then
+                        scannerPath = System.IO.Path.Combine(parentDir, "ViVeTool-GUI.FeatureScanner", "bin", "Debug", FeatureScannerExecutable)
+                    End If
+                End If
+
+                If System.IO.File.Exists(scannerPath) Then
+                    Dim startInfo = New System.Diagnostics.ProcessStartInfo With {
+                        .FileName = scannerPath,
+                        .UseShellExecute = True
+                    }
+                    System.Diagnostics.Process.Start(startInfo)
+                    StatusMessage = "Feature Scanner launched. After successful scan, you can publish the feature list."
+                    ' Show the publish panel after launching the scanner
+                    CanShowPublishPanel = True
+                Else
+                    StatusMessage = $"Feature Scanner not found. Please ensure {FeatureScannerExecutable} is available."
+                End If
+            Catch ex As Exception
+                StatusMessage = $"Error launching Feature Scanner: {ex.Message}"
+            End Try
+        End Sub
+
+        ''' <summary>
+        ''' Determines if the publish feature list command can execute.
+        ''' </summary>
+        Private Function CanExecutePublishFeatureList() As Boolean
+            Return Not IsPublishing AndAlso
+                   Not String.IsNullOrWhiteSpace(PublishBuildNumber) AndAlso
+                   (Not String.IsNullOrWhiteSpace(PublishArtifactPath) OrElse Not String.IsNullOrWhiteSpace(PublishArtifactUrl)) AndAlso
+                   Not String.IsNullOrWhiteSpace(PublishGitHubToken)
+        End Function
+
+        ''' <summary>
+        ''' Executes the publish feature list command asynchronously.
+        ''' </summary>
+        Private Async Function ExecutePublishFeatureListAsync() As Task
+            Try
+                IsPublishing = True
+                PublishStatus = Models.PublishStatus.Publishing
+                PublishErrorMessage = String.Empty
+                IsMaintainerOnlyError = False
+                StatusMessage = "Publishing feature list via GitHub Actions..."
+
+                Dim result = Await _publishService.DispatchPublishWorkflowAsync(
+                    PublishBuildNumber,
+                    PublishArtifactPath,
+                    PublishArtifactUrl,
+                    PublishFormat,
+                    PublishGitHubToken)
+
+                If result.Status = Models.PublishStatus.Success Then
+                    PublishStatus = Models.PublishStatus.Success
+                    StatusMessage = "Feature list publish workflow dispatched successfully. Check GitHub Actions for progress."
+                Else
+                    PublishStatus = Models.PublishStatus.Failure
+                    PublishErrorMessage = result.ErrorMessage
+                    IsMaintainerOnlyError = result.IsMaintainerOnly
+                    If result.IsMaintainerOnly Then
+                        StatusMessage = "Access denied: Publishing feature lists is restricted to repository maintainers only."
+                    Else
+                        StatusMessage = $"Publish failed: {result.ErrorMessage}"
+                    End If
+                End If
+            Catch ex As Exception
+                PublishStatus = Models.PublishStatus.Failure
+                PublishErrorMessage = ex.Message
+                StatusMessage = $"Error: {ex.Message}"
+            Finally
+                IsPublishing = False
+            End Try
+        End Function
+
+        ''' <summary>
+        ''' Sets the artifact path from a successful Feature Scanner run.
+        ''' </summary>
+        ''' <param name="artifactPath">The path to the generated feature list file.</param>
+        ''' <param name="buildNumber">The Windows build number.</param>
+        Public Sub SetScannerResult(artifactPath As String, buildNumber As String)
+            PublishArtifactPath = artifactPath
+            PublishBuildNumber = buildNumber
+            CanShowPublishPanel = True
+            PublishStatus = Models.PublishStatus.Idle
+            PublishErrorMessage = String.Empty
+        End Sub
+
+        ''' <summary>
+        ''' Resets the publish status to idle.
+        ''' </summary>
+        Public Sub ResetPublishStatus()
+            PublishStatus = Models.PublishStatus.Idle
+            PublishErrorMessage = String.Empty
+            IsMaintainerOnlyError = False
+        End Sub
+
+#End Region
+
     End Class
 End Namespace

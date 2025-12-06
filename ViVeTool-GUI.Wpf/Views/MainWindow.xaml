@@ -183,7 +183,113 @@
                                 Margin="0,0,0,8"
                                 HorizontalAlignment="Stretch" />
 
-                        <!-- TODO: Add more actions like Disable, Manual Set, etc. -->
+                        <!-- Feature Scanner Section -->
+                        <Separator Margin="0,10,0,10" />
+
+                        <TextBlock Text="Feature Scanner" 
+                                   FontSize="14" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                   Margin="0,0,0,10" />
+
+                        <Button Content="Launch Feature Scanner"
+                                Command="{Binding LaunchFeatureScannerCommand}"
+                                Margin="0,0,0,8"
+                                HorizontalAlignment="Stretch"
+                                ToolTip="Launch the Feature Scanner to scan for hidden Windows features" />
+
+                        <!-- Publish Feature List Panel -->
+                        <Border Visibility="{Binding CanShowPublishPanel, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Background="{DynamicResource TertiaryBackgroundBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10"
+                                Margin="0,8,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Publish Feature List" 
+                                           FontSize="13" 
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                           Margin="0,0,0,10" />
+
+                                <!-- Build Number -->
+                                <TextBlock Text="Build Number:" 
+                                           Foreground="{DynamicResource SecondaryForegroundBrush}"
+                                           Margin="0,0,0,4" />
+                                <TextBox Text="{Binding PublishBuildNumber, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,0,8" />
+
+                                <!-- Format Selection -->
+                                <TextBlock Text="Format:" 
+                                           Foreground="{DynamicResource SecondaryForegroundBrush}"
+                                           Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding AvailableFormats}"
+                                          SelectedItem="{Binding PublishFormat}"
+                                          Margin="0,0,0,8" />
+
+                                <!-- Artifact Path -->
+                                <TextBlock Text="Artifact Path:" 
+                                           Foreground="{DynamicResource SecondaryForegroundBrush}"
+                                           Margin="0,0,0,4" />
+                                <TextBox Text="{Binding PublishArtifactPath, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,0,8"
+                                         ToolTip="Path to the generated feature list file from Feature Scanner" />
+
+                                <!-- Artifact URL (alternative) -->
+                                <TextBlock Text="Or Artifact URL:" 
+                                           Foreground="{DynamicResource SecondaryForegroundBrush}"
+                                           Margin="0,0,0,4" />
+                                <TextBox Text="{Binding PublishArtifactUrl, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,0,8"
+                                         ToolTip="URL to download the artifact from (alternative to local path)" />
+
+                                <!-- GitHub Token -->
+                                <TextBlock Text="GitHub Token:" 
+                                           Foreground="{DynamicResource SecondaryForegroundBrush}"
+                                           Margin="0,0,0,4" />
+                                <PasswordBox x:Name="GitHubTokenBox"
+                                             Margin="0,0,0,8"
+                                             PasswordChanged="GitHubTokenBox_PasswordChanged"
+                                             ToolTip="Personal Access Token with workflow permissions" />
+
+                                <!-- Publish Button -->
+                                <Button Content="{Binding PublishStatus, Converter={StaticResource PublishStatusToButtonTextConverter}, FallbackValue='Publish via GitHub Actions'}"
+                                        Command="{Binding PublishFeatureListCommand}"
+                                        Margin="0,0,0,4"
+                                        HorizontalAlignment="Stretch"
+                                        IsEnabled="{Binding IsPublishing, Converter={StaticResource InverseBoolConverter}}" />
+
+                                <!-- Status Messages -->
+                                <TextBlock Text="{Binding PublishErrorMessage}"
+                                           Foreground="Red"
+                                           TextWrapping="Wrap"
+                                           Visibility="{Binding PublishErrorMessage, Converter={StaticResource StringToVisibilityConverter}}"
+                                           Margin="0,4,0,0" />
+
+                                <!-- Maintainer-Only Warning -->
+                                <Border Visibility="{Binding IsMaintainerOnlyError, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        Background="#FFFFCDD2"
+                                        CornerRadius="4"
+                                        Padding="8"
+                                        Margin="0,4,0,0">
+                                    <TextBlock Text="Publishing feature lists is restricted to repository maintainers. Please contact a maintainer to publish your feature list."
+                                               Foreground="#FFB71C1C"
+                                               TextWrapping="Wrap" />
+                                </Border>
+
+                                <!-- Success Message -->
+                                <Border Visibility="{Binding PublishStatus, Converter={StaticResource PublishSuccessToVisibilityConverter}}"
+                                        Background="#FFC8E6C9"
+                                        CornerRadius="4"
+                                        Padding="8"
+                                        Margin="0,4,0,0">
+                                    <TextBlock Text="Workflow dispatched successfully! Check GitHub Actions for progress."
+                                               Foreground="#FF2E7D32"
+                                               TextWrapping="Wrap" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </Border>

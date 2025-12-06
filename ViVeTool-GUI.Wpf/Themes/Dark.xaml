@@ -4,6 +4,7 @@
     <!-- Dark Theme Colors -->
     <Color x:Key="PrimaryBackgroundColor">#1E1E1E</Color>
     <Color x:Key="SecondaryBackgroundColor">#2D2D2D</Color>
+    <Color x:Key="TertiaryBackgroundColor">#383838</Color>
     <Color x:Key="PrimaryForegroundColor">#E4E4E4</Color>
     <Color x:Key="SecondaryForegroundColor">#A0A0A0</Color>
     <Color x:Key="AccentColor">#0078D4</Color>
@@ -17,6 +18,7 @@
     <!-- Dark Theme Brushes -->
     <SolidColorBrush x:Key="PrimaryBackgroundBrush" Color="{StaticResource PrimaryBackgroundColor}" />
     <SolidColorBrush x:Key="SecondaryBackgroundBrush" Color="{StaticResource SecondaryBackgroundColor}" />
+    <SolidColorBrush x:Key="TertiaryBackgroundBrush" Color="{StaticResource TertiaryBackgroundColor}" />
     <SolidColorBrush x:Key="PrimaryForegroundBrush" Color="{StaticResource PrimaryForegroundColor}" />
     <SolidColorBrush x:Key="SecondaryForegroundBrush" Color="{StaticResource SecondaryForegroundColor}" />
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
