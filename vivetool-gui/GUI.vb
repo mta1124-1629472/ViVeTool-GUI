@@ -125,7 +125,12 @@ Public Class GUI
     ''' </summary>
     Private Sub BackgroundTasks()
         'Check for Updates
-        AutoUpdater.Start("https://raw.githubusercontent.com/PeterStrick/ViVeTool-GUI/master/UpdaterXML.xml")
+        Try
+            AutoUpdater.Start("https://raw.githubusercontent.com/mta1124-1629472/ViVeTool-GUI/master/UpdaterXML.xml")
+        Catch ex As Exception
+            'Silently fail if auto-updater cannot be reached to avoid startup crashes
+            Diagnostics.Debug.WriteLine("AutoUpdater failed: " & ex.Message)
+        End Try
 
         'Populate the Build Combo Box, but first check if the PC is connected to the Internet, otherwise the GUI will crash without giving any helpful Information on WHY
         PopulateBuildComboBox_Check()
@@ -175,7 +180,8 @@ Public Class GUI
             .Encoding = System.Text.Encoding.UTF8
         }
         WebClientRepo.Headers.Add(HttpRequestHeader.ContentType, "application/json; charset=utf-8")
-        WebClientRepo.Headers.Add(HttpRequestHeader.UserAgent, "PeterStrick/vivetool-gui")
+        Dim ua As String = String.Format("{0}/{1} (+https://github.com/{2}/ViVeTool-GUI)", My.Application.Info.ProductName, My.Application.Info.Version.ToString, "mta1124-1629472")
+        WebClientRepo.Headers.Add(HttpRequestHeader.UserAgent, ua)
 
         'Get the "tree" array from the API JSON Result
         Try
@@ -204,7 +210,8 @@ Public Class GUI
             .Encoding = System.Text.Encoding.UTF8
         }
         WebClientFeatures.Headers.Add(HttpRequestHeader.ContentType, "application/json; charset=utf-8")
-        WebClientFeatures.Headers.Add(HttpRequestHeader.UserAgent, "PeterStrick/vivetool-gui")
+        Dim ua As String = String.Format("{0}/{1} (+https://github.com/{2}/ViVeTool-GUI)", My.Application.Info.ProductName, My.Application.Info.Version.ToString, "mta1124-1629472")
+        WebClientFeatures.Headers.Add(HttpRequestHeader.UserAgent, ua)
 
         'Get the "tree" array from the API JSON Result
         Try
@@ -465,6 +472,8 @@ Public Class GUI
             Dim WebClient As New WebClient With {
                     .Encoding = System.Text.Encoding.UTF8
                 }
+            Dim ua As String = String.Format("{0}/{1} (+https://github.com/{2}/ViVeTool-GUI)", My.Application.Info.ProductName, My.Application.Info.Version.ToString, "mta1124-1629472")
+            WebClient.Headers.Add("User-Agent", ua)
             Dim path As String = IO.Path.GetTempPath & selectedBuild & ".txt"
             WebClient.DownloadFile("https://raw.githubusercontent.com/riverar/mach2/master/features/" & selectedBuild & ".txt", path)
 
