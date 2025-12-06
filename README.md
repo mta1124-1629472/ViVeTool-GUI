@@ -69,6 +69,44 @@ See [MIGRATION_NOTES.md](MIGRATION_NOTES.md) for more details on the WPF version
 ## Why not just use ViVeTool?
 Using ViVeTool GUI is more easier and user-friendly, besides it lets you also search for features and enable them with a few clicks.
 
+## Feature Feed
+
+ViVeTool GUI uses a GitHub-hosted feature feed to provide up-to-date feature lists for different Windows builds. The feed consists of:
+
+- `latest.json` - Metadata about available builds and the latest build number
+- `features/{build}/features.csv` or `features.json` - Per-build feature lists
+
+### Consuming the Feed
+
+The WPF version automatically fetches feature lists from the feed with:
+- **ETag-based caching** - Only downloads when content has changed
+- **Offline fallback** - Uses cached data when network is unavailable
+- **Legacy support** - Falls back to mach2 format for older builds
+
+### Publishing Feature Lists (Maintainers Only)
+
+After running the Feature Scanner to scan a Windows build for hidden features, you can publish the results to the feed:
+
+1. **Launch Feature Scanner** from the WPF app
+2. Complete the scan process to generate a feature list
+3. Click **"Publish via GitHub Actions"** in the publish panel
+4. Enter the build number, select format (CSV/JSON), and provide your GitHub token
+5. The workflow will add your feature list to the repository
+
+**Note:** Publishing is restricted to repository maintainers. If you receive a 403 error, please contact a maintainer to publish your feature list.
+
+### Setting up FEED_PUBLISH_TOKEN (Repository Maintainers)
+
+To enable the publish workflow, maintainers need to set up a GitHub secret:
+
+1. Go to **Settings → Secrets and variables → Actions**
+2. Click **New repository secret**
+3. Name: `FEED_PUBLISH_TOKEN`
+4. Value: A Personal Access Token (PAT) with `repo` and `workflow` permissions
+5. Click **Add secret**
+
+The token is used by the GitHub Actions workflow to commit changes to the repository. It is never exposed to client code.
+
 # Licensing
 ViVeTool GUI uses Icons from [icons8.com](https://icons8.com/)
 

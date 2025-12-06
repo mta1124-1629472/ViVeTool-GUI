@@ -18,6 +18,11 @@
             
             <!-- Inverse Boolean Converter for IsEnabled bindings -->
             <local:InverseBooleanConverter x:Key="InverseBoolConverter" />
+
+            <!-- Publish-related converters -->
+            <local:PublishStatusToButtonTextConverter x:Key="PublishStatusToButtonTextConverter" />
+            <local:PublishSuccessToVisibilityConverter x:Key="PublishSuccessToVisibilityConverter" />
+            <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

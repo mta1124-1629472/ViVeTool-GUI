@@ -54,5 +54,15 @@ Namespace Views
                 System.Diagnostics.Debug.WriteLine($"Error initializing: {ex.Message}")
             End Try
         End Sub
+
+        ''' <summary>
+        ''' Handles PasswordBox password changed event to sync with view model.
+        ''' </summary>
+        Private Sub GitHubTokenBox_PasswordChanged(sender As Object, e As System.Windows.RoutedEventArgs)
+            Dim passwordBox = TryCast(sender, System.Windows.Controls.PasswordBox)
+            If passwordBox IsNot Nothing AndAlso _viewModel IsNot Nothing Then
+                _viewModel.PublishGitHubToken = passwordBox.Password
+            End If
+        End Sub
     End Class
 End Namespace
