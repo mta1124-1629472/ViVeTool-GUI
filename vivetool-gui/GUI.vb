@@ -75,6 +75,15 @@ Public Class GUI
     Dim LineStage As String = String.Empty
 
     ''' <summary>
+    ''' Gets the User-Agent string for HTTP requests
+    ''' </summary>
+    Private ReadOnly Property UserAgent As String
+        Get
+            Return String.Format("{0}/{1} (+https://github.com/{2}/ViVeTool-GUI)", My.Application.Info.ProductName, My.Application.Info.Version.ToString, "mta1124-1629472")
+        End Get
+    End Property
+
+    ''' <summary>
     ''' P/Invoke declaration. Used to Insert the About Menu Element, into the System Menu. Function get's the System Menu
     ''' </summary>
     ''' <param name="hWnd"></param>
@@ -180,8 +189,7 @@ Public Class GUI
             .Encoding = System.Text.Encoding.UTF8
         }
         WebClientRepo.Headers.Add(HttpRequestHeader.ContentType, "application/json; charset=utf-8")
-        Dim ua As String = String.Format("{0}/{1} (+https://github.com/{2}/ViVeTool-GUI)", My.Application.Info.ProductName, My.Application.Info.Version.ToString, "mta1124-1629472")
-        WebClientRepo.Headers.Add(HttpRequestHeader.UserAgent, ua)
+        WebClientRepo.Headers.Add(HttpRequestHeader.UserAgent, UserAgent)
 
         'Get the "tree" array from the API JSON Result
         Try
@@ -210,8 +218,7 @@ Public Class GUI
             .Encoding = System.Text.Encoding.UTF8
         }
         WebClientFeatures.Headers.Add(HttpRequestHeader.ContentType, "application/json; charset=utf-8")
-        Dim ua As String = String.Format("{0}/{1} (+https://github.com/{2}/ViVeTool-GUI)", My.Application.Info.ProductName, My.Application.Info.Version.ToString, "mta1124-1629472")
-        WebClientFeatures.Headers.Add(HttpRequestHeader.UserAgent, ua)
+        WebClientFeatures.Headers.Add(HttpRequestHeader.UserAgent, UserAgent)
 
         'Get the "tree" array from the API JSON Result
         Try
@@ -472,8 +479,7 @@ Public Class GUI
             Dim WebClient As New WebClient With {
                     .Encoding = System.Text.Encoding.UTF8
                 }
-            Dim ua As String = String.Format("{0}/{1} (+https://github.com/{2}/ViVeTool-GUI)", My.Application.Info.ProductName, My.Application.Info.Version.ToString, "mta1124-1629472")
-            WebClient.Headers.Add("User-Agent", ua)
+            WebClient.Headers.Add(HttpRequestHeader.UserAgent, UserAgent)
             Dim path As String = IO.Path.GetTempPath & selectedBuild & ".txt"
             WebClient.DownloadFile("https://raw.githubusercontent.com/riverar/mach2/master/features/" & selectedBuild & ".txt", path)
 
